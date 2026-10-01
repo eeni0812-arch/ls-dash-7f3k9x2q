@@ -11,6 +11,9 @@
   .refresh-btn { background:#3b4ab0; color:white; border:none; border-radius:6px; padding:8px 16px;
                   font-size:14px; cursor:pointer; }
   .refresh-btn:hover { background:#2f3a8f; }
+  .account-title { font-size: 18px; margin-top: 36px; margin-bottom: 10px; padding-bottom: 6px;
+                     border-bottom: 2px solid #3b4ab0; }
+  .account-title:first-of-type { margin-top: 0; }
   .summary { display:grid; grid-template-columns: repeat(6, 1fr); gap:0; background:white; border-radius:8px;
               box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:20px; overflow:hidden; }
   .summary div { padding:14px; text-align:center; border-right:1px solid #eee; }
@@ -25,25 +28,28 @@
   .down { color:#1565c0; font-weight:bold; }
   .badge { display:inline-block; background:#eef2ff; color:#3b4ab0; border-radius:4px; padding:2px 6px; font-size:11px; margin-left:4px; }
   .log { font-family: monospace; font-size: 12px; padding: 2px 0; border-bottom: 1px solid #f0f0f0; }
-  h2 { margin-top: 32px; font-size: 16px; }
+  h2 { font-size: 16px; }
+  h3 { margin-top: 20px; font-size: 14px; color:#555; }
 </style>
 </head>
 <body>
   <div class="topbar">
     <div>
       <h1>LS증권 자동매매 대시보드</h1>
-      <span class="updated">마지막 갱신: 2026-10-01 14:02:09 (최대 3분 이내)</span>
+      <span class="updated">마지막 갱신: 2026-10-01 14:03:53 (최대 3분 이내)</span>
     </div>
     <button class="refresh-btn" onclick="location.reload()">새로고침</button>
   </div>
 
+  
+  <h2 class="account-title">01계좌</h2>
   <div class="summary">
-    <div><div class="label">추정자산</div><div class="value">26,073,987</div></div>
+    <div><div class="label">추정자산</div><div class="value">26,083,467</div></div>
     <div><div class="label">실현손익</div><div class="value down">-434,643</div></div>
     <div><div class="label">매입금액</div><div class="value">11,720,023</div></div>
-    <div><div class="label">평가금액</div><div class="value">13,698,940</div></div>
-    <div><div class="label">평가손익</div><div class="value up">1,978,917</div></div>
-    <div><div class="label">수익률</div><div class="value up">16.88%</div></div>
+    <div><div class="label">평가금액</div><div class="value">13,708,420</div></div>
+    <div><div class="label">평가손익</div><div class="value up">1,988,397</div></div>
+    <div><div class="label">수익률</div><div class="value up">16.97%</div></div>
   </div>
 
   <table>
@@ -56,38 +62,38 @@
             <td class="name">샘씨엔에스</td>
             <td>166</td>
             <td>18,090</td>
-            <td>20,000</td>
+            <td>19,990</td>
             <td>3,002,940</td>
-            <td>3,320,000</td>
-            <td class="up">317,060</td>
-            <td class="up">10.55%</td>
+            <td>3,318,340</td>
+            <td class="up">315,400</td>
+            <td class="up">10.50%</td>
             <td><span class='badge'>10%초과알림</span></td>
         </tr>
         <tr>
             <td class="name">씨엠티엑스</td>
             <td>85</td>
             <td>77,654</td>
-            <td>93,500</td>
+            <td>93,600</td>
             <td>6,600,650</td>
-            <td>7,947,500</td>
-            <td class="up">1,346,850</td>
-            <td class="up">20.40%</td>
+            <td>7,956,000</td>
+            <td class="up">1,355,350</td>
+            <td class="up">20.53%</td>
             <td><span class='badge'>10%초과알림</span></td>
         </tr>
         <tr>
             <td class="name">저스템</td>
             <td>132</td>
             <td>16,033</td>
-            <td>18,420</td>
+            <td>18,440</td>
             <td>2,116,433</td>
-            <td>2,431,440</td>
-            <td class="up">315,007</td>
-            <td class="up">14.88%</td>
+            <td>2,434,080</td>
+            <td class="up">317,647</td>
+            <td class="up">15.00%</td>
             <td><span class='badge'>10%초과알림</span></td>
         </tr>
   </table>
 
-  <h2>당일 매매내역</h2>
+  <h3>당일 매매내역</h3>
   <table>
     <tr>
       <th>종목명</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
@@ -139,13 +145,75 @@
             <td>-</td>
         </tr>
   </table>
+
+  <h2 class="account-title">04계좌</h2>
+  <div class="summary">
+    <div><div class="label">추정자산</div><div class="value">86,652,989</div></div>
+    <div><div class="label">실현손익</div><div class="value down">-332,156</div></div>
+    <div><div class="label">매입금액</div><div class="value">88,428,092</div></div>
+    <div><div class="label">평가금액</div><div class="value">83,118,566</div></div>
+    <div><div class="label">평가손익</div><div class="value down">-5,309,526</div></div>
+    <div><div class="label">수익률</div><div class="value down">-6.00%</div></div>
+  </div>
+
+  <table>
+    <tr>
+      <th>종목명</th><th>보유수량</th><th>평균단가</th><th>현재가</th>
+      <th>매입금액</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>상태</th>
+    </tr>
+    
+        <tr>
+            <td class="name">SK하이닉스</td>
+            <td>45</td>
+            <td>1,933,000</td>
+            <td>1,815,000</td>
+            <td>86,985,000</td>
+            <td>81,675,000</td>
+            <td class="down">-5,310,000</td>
+            <td class="down">-6.10%</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td class="name">CMA RP</td>
+            <td>1,443,092</td>
+            <td>0</td>
+            <td>0</td>
+            <td>1,443,092</td>
+            <td>1,443,566</td>
+            <td class="up">474</td>
+            <td class="up">0.03%</td>
+            <td></td>
+        </tr>
+  </table>
+
+  <h3>당일 매매내역</h3>
+  <table>
+    <tr>
+      <th>종목명</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
+      <th>수수료</th><th>세금</th><th>순금액</th><th>추정실현손익</th>
+    </tr>
+    
+        <tr>
+            <td class="name">SK하이닉스</td>
+            <td>매도</td>
+            <td>2</td>
+            <td>1,771,000</td>
+            <td>3,542,000</td>
+            <td>495</td>
+            <td>7,082</td>
+            <td>3,534,423</td>
+            <td><span class='down'>-331,577 (-8.58%)</span></td>
+        </tr>
+  </table>
+
+
   <div style="font-size:12px; color:#999; margin-top:6px;">
     ※ 추정실현손익은 매도 시점의 평균단가(BEP)를 기준으로 계산한 추정치입니다.
     보유 중 1분마다 기록해둔 평균단가 이력을 활용하므로, 전량 매도된 종목도 대부분 계산 가능합니다.
     다만 이 기록 기능 도입 이전에 이미 전량 매도된 종목은 기록이 없어 '확인불가'로 표시됩니다.
   </div>
 
-  <h2>최근 매매기록</h2>
+  <h2 style="margin-top:32px;">최근 매매기록</h2>
   <div class='log'>[2026-10-01 12:54:03] 샘씨엔에스(252990) 수익률 10.11% 로 10% 초과 (조기 알림)</div><div class='log'>[2026-10-01 12:20:18] 저스템(417840) 수익률 17.44% 로 10% 초과 (조기 알림)</div><div class='log'>[2026-10-01 12:20:17] 씨엠티엑스(388210) 수익률 19.11% 로 10% 초과 (조기 알림)</div>
 </body>
 </html>
