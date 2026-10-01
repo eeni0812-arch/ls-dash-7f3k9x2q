@@ -32,13 +32,15 @@
   .log { font-family: monospace; font-size: 12px; padding: 2px 0; border-bottom: 1px solid #f0f0f0; }
   h2 { font-size: 16px; }
   h3 { margin-top: 20px; font-size: 14px; color:#555; }
+  th.sortable { cursor:pointer; user-select:none; }
+  th.sortable:hover { color:#3b4ab0; }
 </style>
 </head>
 <body>
   <div class="topbar">
     <div>
       <h1>LS증권 자동매매 대시보드</h1>
-      <span class="updated">마지막 갱신: 2026-10-01 16:16:08 (최대 3분 이내)</span>
+      <span class="updated">마지막 갱신: 2026-10-01 16:17:05 (최대 3분 이내)</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
       <select id="accountSelect" class="account-select" onchange="switchAccount(this.value)">
@@ -51,17 +53,17 @@
   <div class="account-section" id="acc-01계좌" style="display:block;">
   <h2 class="account-title">01계좌</h2>
   <div class="summary">
-    <div><div class="label">추정자산</div><div class="value">26,190,370</div></div>
+    <div><div class="label">추정자산</div><div class="value">26,159,370</div></div>
     <div><div class="label">실현손익</div><div class="value down">-432,033</div></div>
     <div><div class="label">매입금액</div><div class="value">18,300,623</div></div>
-    <div><div class="label">평가금액</div><div class="value">20,394,260</div></div>
-    <div><div class="label">평가손익</div><div class="value up">2,093,637</div></div>
-    <div><div class="label">수익률</div><div class="value up">11.44%</div></div>
+    <div><div class="label">평가금액</div><div class="value">20,363,260</div></div>
+    <div><div class="label">평가손익</div><div class="value up">2,062,637</div></div>
+    <div><div class="label">수익률</div><div class="value up">11.27%</div></div>
   </div>
 
   <table>
     <tr>
-      <th>종목명</th><th>보유수량</th><th>평균단가</th><th>현재가</th>
+      <th>종목명</th><th>보유수량</th><th>평균단가</th><th>현재가</th><th>등락률</th>
       <th>매입금액</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>상태</th>
     </tr>
     
@@ -69,11 +71,12 @@
             <td class="name">디아이</td>
             <td>76</td>
             <td>41,025</td>
-            <td>41,400</td>
+            <td>41,450</td>
+            <td class='up'>+12.94%</td>
             <td>3,117,900</td>
-            <td>3,146,400</td>
-            <td class="up">28,500</td>
-            <td class="up">0.91%</td>
+            <td>3,150,200</td>
+            <td class="up">32,300</td>
+            <td class="up">1.03%</td>
             <td></td>
         </tr>
         <tr>
@@ -81,6 +84,7 @@
             <td>16</td>
             <td>193,000</td>
             <td>194,000</td>
+            <td class='up'>+8.62%</td>
             <td>3,088,000</td>
             <td>3,104,000</td>
             <td class="up">16,000</td>
@@ -92,6 +96,7 @@
             <td>166</td>
             <td>18,090</td>
             <td>20,150</td>
+            <td class='up'>+2.08%</td>
             <td>3,002,940</td>
             <td>3,344,900</td>
             <td class="up">341,960</td>
@@ -102,11 +107,12 @@
             <td class="name">씨엠티엑스</td>
             <td>87</td>
             <td>78,037</td>
-            <td>93,800</td>
+            <td>93,400</td>
+            <td class='up'>+5.42%</td>
             <td>6,789,250</td>
-            <td>8,160,600</td>
-            <td class="up">1,371,350</td>
-            <td class="up">20.19%</td>
+            <td>8,125,800</td>
+            <td class="up">1,336,550</td>
+            <td class="up">19.68%</td>
             <td><span class='badge'>BEP보호모드</span> <span class='badge'>10%초과알림</span> <span class='badge'>10%룰실행</span></td>
         </tr>
         <tr>
@@ -114,6 +120,7 @@
             <td>142</td>
             <td>16,215</td>
             <td>18,580</td>
+            <td class='up'>+0.05%</td>
             <td>2,302,533</td>
             <td>2,638,360</td>
             <td class="up">335,827</td>
@@ -123,24 +130,16 @@
   </table>
 
   <h3>당일 매매내역</h3>
-  <table>
+  <table class="trades-table">
+    <thead>
     <tr>
-      <th>종목명</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
+      <th class="sortable" onclick="sortTrades(this)" data-order="asc" title="클릭: 오름차순/내림차순 전환">종목명 ▲</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
       <th>수수료</th><th>세금</th><th>순금액</th><th>추정실현손익</th>
     </tr>
+    </thead>
+    <tbody>
     
-        <tr>
-            <td class="name">디아이</td>
-            <td>매도</td>
-            <td>20</td>
-            <td>41,250</td>
-            <td>825,000</td>
-            <td>119</td>
-            <td>1,648</td>
-            <td>823,233</td>
-            <td><span class='up'>2,733 (0.33%)</span></td>
-        </tr>
-        <tr>
+        <tr data-name="LS">
             <td class="name">LS</td>
             <td>매도</td>
             <td>30</td>
@@ -151,18 +150,18 @@
             <td>8,875,967</td>
             <td><span style='color:#999;'>확인불가(포지션 종료)</span></td>
         </tr>
-        <tr>
-            <td class="name">씨엠티엑스</td>
+        <tr data-name="디아이">
+            <td class="name">디아이</td>
             <td>매도</td>
-            <td>2</td>
-            <td>91,300</td>
-            <td>182,600</td>
-            <td>27</td>
-            <td>365</td>
-            <td>182,208</td>
-            <td><span class='up'>26,134 (16.74%)</span></td>
+            <td>20</td>
+            <td>41,250</td>
+            <td>825,000</td>
+            <td>119</td>
+            <td>1,648</td>
+            <td>823,233</td>
+            <td><span class='up'>2,733 (0.33%)</span></td>
         </tr>
-        <tr>
+        <tr data-name="디아이">
             <td class="name">디아이</td>
             <td>매수</td>
             <td>48</td>
@@ -173,7 +172,7 @@
             <td>1,965,600</td>
             <td>-</td>
         </tr>
-        <tr>
+        <tr data-name="디아이">
             <td class="name">디아이</td>
             <td>매수</td>
             <td>48</td>
@@ -184,18 +183,18 @@
             <td>3,938,951</td>
             <td>-</td>
         </tr>
-        <tr>
-            <td class="name">피에스케이홀딩스</td>
-            <td>매수</td>
-            <td>16</td>
-            <td>193,000</td>
-            <td>3,088,000</td>
-            <td>463</td>
-            <td>0</td>
-            <td>3,088,463</td>
-            <td>-</td>
+        <tr data-name="씨엠티엑스">
+            <td class="name">씨엠티엑스</td>
+            <td>매도</td>
+            <td>2</td>
+            <td>91,300</td>
+            <td>182,600</td>
+            <td>27</td>
+            <td>365</td>
+            <td>182,208</td>
+            <td><span class='up'>26,134 (16.74%)</span></td>
         </tr>
-        <tr>
+        <tr data-name="씨엠티엑스">
             <td class="name">씨엠티엑스</td>
             <td>매수</td>
             <td>2</td>
@@ -206,7 +205,7 @@
             <td>184,200</td>
             <td>-</td>
         </tr>
-        <tr>
+        <tr data-name="씨엠티엑스">
             <td class="name">씨엠티엑스</td>
             <td>매수</td>
             <td>2</td>
@@ -217,7 +216,7 @@
             <td>372,855</td>
             <td>-</td>
         </tr>
-        <tr>
+        <tr data-name="저스템">
             <td class="name">저스템</td>
             <td>매수</td>
             <td>10</td>
@@ -228,7 +227,7 @@
             <td>186,100</td>
             <td>-</td>
         </tr>
-        <tr>
+        <tr data-name="저스템">
             <td class="name">저스템</td>
             <td>매수</td>
             <td>10</td>
@@ -239,6 +238,18 @@
             <td>376,756</td>
             <td>-</td>
         </tr>
+        <tr data-name="피에스케이홀딩스">
+            <td class="name">피에스케이홀딩스</td>
+            <td>매수</td>
+            <td>16</td>
+            <td>193,000</td>
+            <td>3,088,000</td>
+            <td>463</td>
+            <td>0</td>
+            <td>3,088,463</td>
+            <td>-</td>
+        </tr>
+    </tbody>
   </table>
 </div><div class="account-section" id="acc-04계좌" style="display:none;">
   <h2 class="account-title">04계좌</h2>
@@ -253,7 +264,7 @@
 
   <table>
     <tr>
-      <th>종목명</th><th>보유수량</th><th>평균단가</th><th>현재가</th>
+      <th>종목명</th><th>보유수량</th><th>평균단가</th><th>현재가</th><th>등락률</th>
       <th>매입금액</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>상태</th>
     </tr>
     
@@ -262,6 +273,7 @@
             <td>45</td>
             <td>1,933,000</td>
             <td>1,821,000</td>
+            <td class='up'>+2.53%</td>
             <td>86,985,000</td>
             <td>81,945,000</td>
             <td class="down">-5,040,000</td>
@@ -273,6 +285,7 @@
             <td>1,443,092</td>
             <td>0</td>
             <td>0</td>
+            <td>-</td>
             <td>1,443,092</td>
             <td>1,443,566</td>
             <td class="up">474</td>
@@ -282,13 +295,16 @@
   </table>
 
   <h3>당일 매매내역</h3>
-  <table>
+  <table class="trades-table">
+    <thead>
     <tr>
-      <th>종목명</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
+      <th class="sortable" onclick="sortTrades(this)" data-order="asc" title="클릭: 오름차순/내림차순 전환">종목명 ▲</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
       <th>수수료</th><th>세금</th><th>순금액</th><th>추정실현손익</th>
     </tr>
+    </thead>
+    <tbody>
     
-        <tr>
+        <tr data-name="SK하이닉스">
             <td class="name">SK하이닉스</td>
             <td>매도</td>
             <td>2</td>
@@ -299,14 +315,48 @@
             <td>3,534,423</td>
             <td><span class='down'>-331,577 (-8.58%)</span></td>
         </tr>
+    </tbody>
   </table>
 </div>
 
   <script>
+    // 선택 계좌를 주소 끝(#계좌명)에 기억 → 새로고침해도 유지
     function switchAccount(name) {
+      var found = false;
       document.querySelectorAll('.account-section').forEach(function(el) {
-        el.style.display = (el.id === 'acc-' + name) ? 'block' : 'none';
+        var on = (el.id === 'acc-' + name);
+        el.style.display = on ? 'block' : 'none';
+        if (on) found = true;
       });
+      if (!found) return false;
+      document.getElementById('accountSelect').value = name;
+      if (decodeURIComponent(location.hash.slice(1)) !== name) {
+        history.replaceState(null, '', '#' + encodeURIComponent(name));
+      }
+      return true;
+    }
+    (function() {
+      var saved = decodeURIComponent(location.hash.slice(1));
+      if (!saved || !switchAccount(saved)) {
+        var sel = document.getElementById('accountSelect');
+        if (sel && sel.value) switchAccount(sel.value);
+      }
+    })();
+
+    // 당일매매내역 종목명 정렬 (같은 종목은 원래 순서 유지)
+    function sortTrades(th) {
+      var order = th.getAttribute('data-order') === 'asc' ? 'desc' : 'asc';
+      th.setAttribute('data-order', order);
+      th.textContent = '종목명 ' + (order === 'asc' ? '▲' : '▼');
+      var tbody = th.closest('table').querySelector('tbody');
+      var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr[data-name]'));
+      rows.forEach(function(r, i) { r._idx = i; });
+      rows.sort(function(a, b) {
+        var c = a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'), 'ko');
+        if (order === 'desc') c = -c;
+        return c !== 0 ? c : a._idx - b._idx;
+      });
+      rows.forEach(function(r) { tbody.appendChild(r); });
     }
   </script>
 
