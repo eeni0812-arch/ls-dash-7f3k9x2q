@@ -1,8 +1,150 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><title>LS증권 자동매매 대시보드</title></head>
+<head>
+<meta charset="UTF-8">
+<title>LS증권 자동매매 대시보드</title>
+<style>
+  body { font-family: -apple-system, 'Malgun Gothic', sans-serif; background:#f5f6f8; margin:0; padding:24px; }
+  h1 { font-size: 20px; display:inline-block; margin-right:16px; }
+  .updated { color:#888; font-size: 13px; }
+  .topbar { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:16px; }
+  .refresh-btn { background:#3b4ab0; color:white; border:none; border-radius:6px; padding:8px 16px;
+                  font-size:14px; cursor:pointer; }
+  .refresh-btn:hover { background:#2f3a8f; }
+  .summary { display:grid; grid-template-columns: repeat(6, 1fr); gap:0; background:white; border-radius:8px;
+              box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:20px; overflow:hidden; }
+  .summary div { padding:14px; text-align:center; border-right:1px solid #eee; }
+  .summary div:last-child { border-right:none; }
+  .summary .label { font-size:12px; color:#888; margin-bottom:4px; }
+  .summary .value { font-size:16px; font-weight:bold; }
+  table { border-collapse: collapse; width:100%; background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  th, td { padding: 10px 14px; text-align: right; border-bottom: 1px solid #eee; }
+  th:first-child, td:first-child, .name { text-align:left; }
+  th { background:#fafafa; font-size:13px; color:#555; }
+  .up { color:#d32f2f; font-weight:bold; }
+  .down { color:#1565c0; font-weight:bold; }
+  .badge { display:inline-block; background:#eef2ff; color:#3b4ab0; border-radius:4px; padding:2px 6px; font-size:11px; margin-left:4px; }
+  .log { font-family: monospace; font-size: 12px; padding: 2px 0; border-bottom: 1px solid #f0f0f0; }
+  h2 { margin-top: 32px; font-size: 16px; }
+</style>
+</head>
 <body>
-<h1>대시보드 준비 중입니다</h1>
-<p>position_manager.py가 곧 이 파일을 실제 데이터로 덮어씁니다.</p>
+  <div class="topbar">
+    <div>
+      <h1>LS증권 자동매매 대시보드</h1>
+      <span class="updated">마지막 갱신: 2026-10-01 13:20:45 (최대 3분 이내)</span>
+    </div>
+    <button class="refresh-btn" onclick="location.reload()">새로고침</button>
+  </div>
+
+  <div class="summary">
+    <div><div class="label">추정자산</div><div class="value">26,010,067</div></div>
+    <div><div class="label">실현손익</div><div class="value down">-434,643</div></div>
+    <div><div class="label">매입금액</div><div class="value">11,720,023</div></div>
+    <div><div class="label">평가금액</div><div class="value">13,635,020</div></div>
+    <div><div class="label">평가손익</div><div class="value up">1,914,997</div></div>
+    <div><div class="label">수익률</div><div class="value up">16.34%</div></div>
+  </div>
+
+  <table>
+    <tr>
+      <th>종목명</th><th>보유수량</th><th>평균단가</th><th>현재가</th>
+      <th>매입금액</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>상태</th>
+    </tr>
+    
+        <tr>
+            <td class="name">샘씨엔에스</td>
+            <td>166</td>
+            <td>18,090</td>
+            <td>20,050</td>
+            <td>3,002,940</td>
+            <td>3,328,300</td>
+            <td class="up">325,360</td>
+            <td class="up">10.83%</td>
+            <td><span class='badge'>10%초과알림</span></td>
+        </tr>
+        <tr>
+            <td class="name">씨엠티엑스</td>
+            <td>85</td>
+            <td>77,654</td>
+            <td>92,200</td>
+            <td>6,600,650</td>
+            <td>7,837,000</td>
+            <td class="up">1,236,350</td>
+            <td class="up">18.73%</td>
+            <td><span class='badge'>10%초과알림</span></td>
+        </tr>
+        <tr>
+            <td class="name">저스템</td>
+            <td>132</td>
+            <td>16,033</td>
+            <td>18,710</td>
+            <td>2,116,433</td>
+            <td>2,469,720</td>
+            <td class="up">353,287</td>
+            <td class="up">16.69%</td>
+            <td><span class='badge'>10%초과알림</span></td>
+        </tr>
+  </table>
+
+  <h2>당일 매매내역</h2>
+  <table>
+    <tr>
+      <th>종목명</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
+      <th>수수료</th><th>세금</th><th>순금액</th><th>추정실현손익</th>
+    </tr>
+    
+        <tr>
+            <td class="name">LS</td>
+            <td>매도</td>
+            <td>30</td>
+            <td>296,500</td>
+            <td>8,895,000</td>
+            <td>1,245</td>
+            <td>17,788</td>
+            <td>8,875,967</td>
+            <td><span style='color:#999;'>확인불가(포지션 종료)</span></td>
+        </tr>
+        <tr>
+            <td class="name">씨엠티엑스</td>
+            <td>매도</td>
+            <td>2</td>
+            <td>91,300</td>
+            <td>182,600</td>
+            <td>27</td>
+            <td>365</td>
+            <td>182,208</td>
+            <td><span class='up'>26,900 (17.32%)</span></td>
+        </tr>
+        <tr>
+            <td class="name">씨엠티엑스</td>
+            <td>매수</td>
+            <td>2</td>
+            <td>92,100</td>
+            <td>184,200</td>
+            <td>27</td>
+            <td>0</td>
+            <td>184,227</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td class="name">저스템</td>
+            <td>매수</td>
+            <td>10</td>
+            <td>19,060</td>
+            <td>190,600</td>
+            <td>28</td>
+            <td>0</td>
+            <td>190,628</td>
+            <td>-</td>
+        </tr>
+  </table>
+  <div style="font-size:12px; color:#999; margin-top:6px;">
+    ※ 추정실현손익은 매도 시점의 평균단가(BEP)를 기준으로 계산한 추정치이며,
+    당일 전량 매도되어 평균단가를 더 이상 알 수 없는 종목은 '확인불가'로 표시됩니다.
+  </div>
+
+  <h2>최근 매매기록</h2>
+  <div class='log'>[2026-10-01 12:54:03] 샘씨엔에스(252990) 수익률 10.11% 로 10% 초과 (조기 알림)</div><div class='log'>[2026-10-01 12:20:18] 저스템(417840) 수익률 17.44% 로 10% 초과 (조기 알림)</div><div class='log'>[2026-10-01 12:20:17] 씨엠티엑스(388210) 수익률 19.11% 로 10% 초과 (조기 알림)</div>
 </body>
 </html>
