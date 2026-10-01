@@ -74,11 +74,11 @@
   <div class="topbar">
     <div>
       <h1>LS증권 자동매매 대시보드</h1>
-      <span class="updated">마지막 갱신: 2026-10-02 07:00:02 (최대 3분 이내)</span>
+      <span class="updated">마지막 갱신: 2026-10-02 07:01:02 (최대 3분 이내)</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
       <select id="accountSelect" class="account-select" onchange="switchAccount(this.value)">
-        <option value="01계좌">01계좌</option><option value="04계좌">04계좌</option>
+        <option value="01계좌">01계좌</option>
       </select>
       <button class="refresh-btn" onclick="location.reload()">새로고침</button>
     </div>
@@ -260,98 +260,6 @@
     </tbody>
   </table>
   </div>
-</div><div class="account-section" id="acc-04계좌" style="display:none;">
-  <h2 class="account-title">04계좌</h2>
-  <div class="summary">
-    <div><div class="label">추정자산</div><div class="value">87,285,648</div></div>
-    <div><div class="label">실현손익</div><div class="value up">0</div></div>
-    <div><div class="label">매입금액</div><div class="value">88,441,139</div></div>
-    <div><div class="label">평가금액</div><div class="value">83,751,225</div></div>
-    <div><div class="label">평가손익</div><div class="value down">-4,689,914</div></div>
-    <div><div class="label">수익률</div><div class="value down">-5.30%</div></div>
-  </div>
-
-  <table class="holdings-table">
-    <tr>
-      <th>종목명</th><th>보유수량</th><th>평균단가</th><th>BEP단가</th><th>현재가</th><th>등락률</th>
-      <th>매입금액</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>상태</th>
-    </tr>
-    
-        <tr>
-            <td class="name">SK하이닉스</td>
-            <td>45</td>
-            <td>1,933,000</td>
-            <td>1,937,456</td>
-            <td>1,833,000</td>
-            <td class=''>+0.00%</td>
-            <td>86,998,047</td>
-            <td>82,307,659</td>
-            <td class="down">-4,690,388</td>
-            <td class="down">-5.39%</td>
-            <td></td>
-        </tr>
-        <tr>
-            <td class="name">CMA RP</td>
-            <td>1,443,092</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>1,443,092</td>
-            <td>1,443,566</td>
-            <td class="up">474</td>
-            <td class="up">0.03%</td>
-            <td><span class='badge'>주식 아님</span></td>
-        </tr>
-  </table>
-  <div class="holdings-cards">
-    
-        <div class="hcard">
-          <div class="hcard-top">
-            <span class="hcard-name">SK하이닉스</span>
-            <span class="hcard-price">1,833,000 <span class=''>+0.00%</span></span>
-          </div>
-          <div class="hcard-grid">
-            <div><span class="k">수익률</span><span class="v down">-5.39%</span></div>
-            <div><span class="k">평가손익</span><span class="v down">-4,690,388</span></div>
-            <div><span class="k">보유수량</span><span class="v">45</span></div>
-            <div><span class="k">평가금액</span><span class="v">82,307,659</span></div>
-            <div><span class="k">평균단가</span><span class="v">1,933,000</span></div>
-            <div><span class="k">BEP단가</span><span class="v">1,937,456</span></div>
-          </div>
-          
-        </div>
-        <div class="hcard">
-          <div class="hcard-top">
-            <span class="hcard-name">CMA RP</span>
-            <span class="hcard-price">- <span class='muted'>-</span></span>
-          </div>
-          <div class="hcard-grid">
-            <div><span class="k">수익률</span><span class="v up">0.03%</span></div>
-            <div><span class="k">평가손익</span><span class="v up">474</span></div>
-            <div><span class="k">보유수량</span><span class="v">1,443,092</span></div>
-            <div><span class="k">평가금액</span><span class="v">1,443,566</span></div>
-            <div><span class="k">평균단가</span><span class="v">-</span></div>
-            <div><span class="k">BEP단가</span><span class="v">-</span></div>
-          </div>
-          <div class="hcard-badges"><span class='badge'>주식 아님</span></div>
-        </div>
-  </div>
-
-  <h3>당일 매매내역</h3>
-  <div class="table-wrap">
-  <table class="trades-table">
-    <thead>
-    <tr>
-      <th class="sortable" onclick="sortTrades(this)" data-order="asc" title="클릭: 오름차순/내림차순 전환">종목명 ▲</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
-      <th>수수료</th><th>세금</th><th>순금액</th><th>추정실현손익</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr><td colspan='9'>당일 매매내역 없음</td></tr>
-    </tbody>
-  </table>
-  </div>
 </div>
 
   <script>
@@ -404,6 +312,6 @@
   </div>
 
   <h2 style="margin-top:32px;">최근 매매기록</h2>
-  <div class='log'>[2026-10-02 06:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 06:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 05:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 05:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 04:05:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:05:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:04:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:04:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:03:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:03:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:02:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:02:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-01 21:17:12] [01계좌] 잔고 조회 실패: LSApiError: t0424: network error: HTTPSConnectionPool(host='openapi.ls-sec.co.kr', port=8080): Read timed out. (read timeout=10.0)</div><div class='log'>[2026-10-01 15:15:05] [01계좌][알림전용모드] 저스템(417840) 39주 매도 조건 충족 (실제 주문 생략) [종가 수익률 15.94% 10%룰]</div><div class='log'>[2026-10-01 15:15:04] [01계좌][알림전용모드] 씨엠티엑스(388210) 25주 매도 조건 충족 (실제 주문 생략) [종가 수익률 21.04% 10%룰]</div><div class='log'>[2026-10-01 15:15:03] [01계좌][알림전용모드] 샘씨엔에스(252990) 49주 매도 조건 충족 (실제 주문 생략) [종가 수익률 10.83% 10%룰]</div><div class='log'>[2026-10-01 12:54:03] 샘씨엔에스(252990) 수익률 10.11% 로 10% 초과 (조기 알림)</div><div class='log'>[2026-10-01 12:20:18] 저스템(417840) 수익률 17.44% 로 10% 초과 (조기 알림)</div><div class='log'>[2026-10-01 12:20:17] 씨엠티엑스(388210) 수익률 19.11% 로 10% 초과 (조기 알림)</div>
+  <div class='log'>[2026-10-02 07:01:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 기간이 만료된 token 입니다. | rsp_cd=IGW00123 | http=500</div><div class='log'>[2026-10-02 06:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 06:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 05:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 05:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 04:05:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:05:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:04:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:04:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:03:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:03:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:02:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-02 04:02:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-01 21:17:12] [01계좌] 잔고 조회 실패: LSApiError: t0424: network error: HTTPSConnectionPool(host='openapi.ls-sec.co.kr', port=8080): Read timed out. (read timeout=10.0)</div><div class='log'>[2026-10-01 15:15:05] [01계좌][알림전용모드] 저스템(417840) 39주 매도 조건 충족 (실제 주문 생략) [종가 수익률 15.94% 10%룰]</div><div class='log'>[2026-10-01 15:15:04] [01계좌][알림전용모드] 씨엠티엑스(388210) 25주 매도 조건 충족 (실제 주문 생략) [종가 수익률 21.04% 10%룰]</div><div class='log'>[2026-10-01 15:15:03] [01계좌][알림전용모드] 샘씨엔에스(252990) 49주 매도 조건 충족 (실제 주문 생략) [종가 수익률 10.83% 10%룰]</div><div class='log'>[2026-10-01 12:54:03] 샘씨엔에스(252990) 수익률 10.11% 로 10% 초과 (조기 알림)</div><div class='log'>[2026-10-01 12:20:18] 저스템(417840) 수익률 17.44% 로 10% 초과 (조기 알림)</div><div class='log'>[2026-10-01 12:20:17] 씨엠티엑스(388210) 수익률 19.11% 로 10% 초과 (조기 알림)</div>
 </body>
 </html>
