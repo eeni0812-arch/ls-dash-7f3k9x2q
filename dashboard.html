@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LS증권 자동매매 대시보드</title>
 <style>
   body { font-family: -apple-system, 'Malgun Gothic', sans-serif; background:#f5f6f8; margin:0; padding:24px; }
@@ -18,8 +19,8 @@
                       background: white; margin-right: 10px; }
   .summary { display:grid; grid-template-columns: repeat(6, 1fr); gap:0; background:white; border-radius:8px;
               box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:20px; overflow:hidden; }
-  .summary div { padding:14px; text-align:center; border-right:1px solid #eee; }
-  .summary div:last-child { border-right:none; }
+  .summary > div { padding:14px; text-align:center; border-right:1px solid #eee; }
+  .summary > div:last-child { border-right:none; }
   .summary .label { font-size:12px; color:#888; margin-bottom:4px; }
   .summary .value { font-size:16px; font-weight:bold; }
   table { border-collapse: collapse; width:100%; background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
@@ -33,6 +34,39 @@
   h2 { font-size: 16px; }
   h3 { margin-top: 20px; font-size: 14px; color:#555; }
   th.sortable { cursor:pointer; user-select:none; }
+  td.name, th:first-child { white-space:nowrap; }
+  .badge { white-space:nowrap; }
+  .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px;
+                 box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+  .table-wrap table { box-shadow:none; }
+  .holdings-cards { display:none; }
+  .muted { color:#999; }
+  .log { word-break:break-all; }
+
+  /* ── 휴대폰 (폭 760px 이하) ── */
+  @media (max-width: 760px) {
+    body { padding:12px; }
+    h1 { font-size:17px; }
+    .topbar { flex-wrap:wrap; gap:8px; }
+    .summary { grid-template-columns: repeat(3, 1fr); }
+    .summary > div { padding:10px 4px; border-bottom:1px solid #eee; }
+    .summary .value { font-size:14px; }
+    .holdings-table { display:none; }
+    .holdings-cards { display:block; }
+    .hcard { background:white; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);
+              padding:12px 14px; margin-bottom:10px; }
+    .hcard-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+                  margin-bottom:8px; }
+    .hcard-name { font-size:16px; font-weight:bold; white-space:nowrap; overflow:hidden;
+                   text-overflow:ellipsis; }
+    .hcard-price { font-size:15px; white-space:nowrap; }
+    .hcard-grid { display:grid; grid-template-columns: 1fr 1fr; gap:4px 16px; font-size:13px; }
+    .hcard-grid div { display:flex; justify-content:space-between; }
+    .hcard-grid .k { color:#888; }
+    .hcard-badges { margin-top:8px; }
+    .hcard-badges .badge { margin-left:0; margin-right:4px; }
+    .table-wrap th, .table-wrap td { white-space:nowrap; padding:8px 10px; font-size:13px; }
+  }
   th.sortable:hover { color:#3b4ab0; }
 </style>
 </head>
@@ -40,7 +74,7 @@
   <div class="topbar">
     <div>
       <h1>LS증권 자동매매 대시보드</h1>
-      <span class="updated">마지막 갱신: 2026-10-01 16:44:04 (최대 3분 이내)</span>
+      <span class="updated">마지막 갱신: 2026-10-01 16:44:43 (최대 3분 이내)</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
       <select id="accountSelect" class="account-select" onchange="switchAccount(this.value)">
@@ -53,15 +87,15 @@
   <div class="account-section" id="acc-01계좌" style="display:block;">
   <h2 class="account-title">01계좌</h2>
   <div class="summary">
-    <div><div class="label">추정자산</div><div class="value">26,022,533</div></div>
+    <div><div class="label">추정자산</div><div class="value">26,070,829</div></div>
     <div><div class="label">실현손익</div><div class="value down">-432,033</div></div>
     <div><div class="label">매입금액</div><div class="value">18,303,366</div></div>
-    <div><div class="label">평가금액</div><div class="value">20,226,423</div></div>
-    <div><div class="label">평가손익</div><div class="value up">1,923,057</div></div>
-    <div><div class="label">수익률</div><div class="value up">10.51%</div></div>
+    <div><div class="label">평가금액</div><div class="value">20,274,719</div></div>
+    <div><div class="label">평가손익</div><div class="value up">1,971,353</div></div>
+    <div><div class="label">수익률</div><div class="value up">10.77%</div></div>
   </div>
 
-  <table>
+  <table class="holdings-table">
     <tr>
       <th>종목명</th><th>보유수량</th><th>평균단가</th><th>BEP단가</th><th>현재가</th><th>등락률</th>
       <th>매입금액</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>상태</th>
@@ -72,12 +106,12 @@
             <td>76</td>
             <td>41,025</td>
             <td>41,120</td>
-            <td>41,200</td>
-            <td class='up'>+12.26%</td>
+            <td>41,150</td>
+            <td class='up'>+12.13%</td>
             <td>3,118,367</td>
-            <td>3,124,470</td>
-            <td class="up">6,103</td>
-            <td class="up">0.19%</td>
+            <td>3,120,677</td>
+            <td class="up">2,310</td>
+            <td class="up">0.07%</td>
             <td></td>
         </tr>
         <tr>
@@ -111,12 +145,12 @@
             <td>87</td>
             <td>78,037</td>
             <td>78,218</td>
-            <td>92,800</td>
-            <td class='up'>+4.74%</td>
+            <td>93,400</td>
+            <td class='up'>+5.42%</td>
             <td>6,790,268</td>
-            <td>8,056,242</td>
-            <td class="up">1,265,974</td>
-            <td class="up">18.64%</td>
+            <td>8,108,331</td>
+            <td class="up">1,318,063</td>
+            <td class="up">19.41%</td>
             <td><span class='badge'>BEP보호모드</span> <span class='badge'>10%초과알림</span> <span class='badge'>10%룰실행</span></td>
         </tr>
         <tr>
@@ -133,8 +167,87 @@
             <td><span class='badge'>BEP보호모드</span> <span class='badge'>10%초과알림</span> <span class='badge'>10%룰실행</span></td>
         </tr>
   </table>
+  <div class="holdings-cards">
+    
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">디아이</span>
+            <span class="hcard-price">41,150 <span class='up'>+12.13%</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v up">0.07%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">2,310</span></div>
+            <div><span class="k">보유수량</span><span class="v">76</span></div>
+            <div><span class="k">평가금액</span><span class="v">3,120,677</span></div>
+            <div><span class="k">평균단가</span><span class="v">41,025</span></div>
+            <div><span class="k">BEP단가</span><span class="v">41,120</span></div>
+          </div>
+          
+        </div>
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">피에스케이홀딩스</span>
+            <span class="hcard-price">194,000 <span class='up'>+8.62%</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v up">0.28%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">8,864</span></div>
+            <div><span class="k">보유수량</span><span class="v">16</span></div>
+            <div><span class="k">평가금액</span><span class="v">3,097,327</span></div>
+            <div><span class="k">평균단가</span><span class="v">193,000</span></div>
+            <div><span class="k">BEP단가</span><span class="v">193,445</span></div>
+          </div>
+          
+        </div>
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">샘씨엔에스</span>
+            <span class="hcard-price">20,000 <span class='up'>+1.32%</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v up">10.30%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">309,472</span></div>
+            <div><span class="k">보유수량</span><span class="v">166</span></div>
+            <div><span class="k">평가금액</span><span class="v">3,312,862</span></div>
+            <div><span class="k">평균단가</span><span class="v">18,090</span></div>
+            <div><span class="k">BEP단가</span><span class="v">18,132</span></div>
+          </div>
+          <div class="hcard-badges"><span class='badge'>BEP보호모드</span> <span class='badge'>10%초과알림</span> <span class='badge'>10%룰실행</span></div>
+        </div>
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">씨엠티엑스</span>
+            <span class="hcard-price">93,400 <span class='up'>+5.42%</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v up">19.41%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">1,318,063</span></div>
+            <div><span class="k">보유수량</span><span class="v">87</span></div>
+            <div><span class="k">평가금액</span><span class="v">8,108,331</span></div>
+            <div><span class="k">평균단가</span><span class="v">78,037</span></div>
+            <div><span class="k">BEP단가</span><span class="v">78,218</span></div>
+          </div>
+          <div class="hcard-badges"><span class='badge'>BEP보호모드</span> <span class='badge'>10%초과알림</span> <span class='badge'>10%룰실행</span></div>
+        </div>
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">저스템</span>
+            <span class="hcard-price">18,600 <span class='up'>+0.16%</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v up">14.44%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">332,644</span></div>
+            <div><span class="k">보유수량</span><span class="v">142</span></div>
+            <div><span class="k">평가금액</span><span class="v">2,635,522</span></div>
+            <div><span class="k">평균단가</span><span class="v">16,215</span></div>
+            <div><span class="k">BEP단가</span><span class="v">16,253</span></div>
+          </div>
+          <div class="hcard-badges"><span class='badge'>BEP보호모드</span> <span class='badge'>10%초과알림</span> <span class='badge'>10%룰실행</span></div>
+        </div>
+  </div>
 
   <h3>당일 매매내역</h3>
+  <div class="table-wrap">
   <table class="trades-table">
     <thead>
     <tr>
@@ -256,18 +369,19 @@
         </tr>
     </tbody>
   </table>
+  </div>
 </div><div class="account-section" id="acc-04계좌" style="display:none;">
   <h2 class="account-title">04계좌</h2>
   <div class="summary">
-    <div><div class="label">추정자산</div><div class="value">86,252,872</div></div>
+    <div><div class="label">추정자산</div><div class="value">86,342,678</div></div>
     <div><div class="label">실현손익</div><div class="value down">-332,156</div></div>
     <div><div class="label">매입금액</div><div class="value">88,441,139</div></div>
-    <div><div class="label">평가금액</div><div class="value">82,718,449</div></div>
-    <div><div class="label">평가손익</div><div class="value down">-5,722,690</div></div>
-    <div><div class="label">수익률</div><div class="value down">-6.47%</div></div>
+    <div><div class="label">평가금액</div><div class="value">82,808,255</div></div>
+    <div><div class="label">평가손익</div><div class="value down">-5,632,884</div></div>
+    <div><div class="label">수익률</div><div class="value down">-6.37%</div></div>
   </div>
 
-  <table>
+  <table class="holdings-table">
     <tr>
       <th>종목명</th><th>보유수량</th><th>평균단가</th><th>BEP단가</th><th>현재가</th><th>등락률</th>
       <th>매입금액</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>상태</th>
@@ -278,12 +392,12 @@
             <td>45</td>
             <td>1,933,000</td>
             <td>1,937,456</td>
-            <td>1,810,000</td>
-            <td class='up'>+1.91%</td>
+            <td>1,812,000</td>
+            <td class='up'>+2.03%</td>
             <td>86,998,047</td>
-            <td>81,274,883</td>
-            <td class="down">-5,723,164</td>
-            <td class="down">-6.57%</td>
+            <td>81,364,689</td>
+            <td class="down">-5,633,358</td>
+            <td class="down">-6.47%</td>
             <td></td>
         </tr>
         <tr>
@@ -300,8 +414,42 @@
             <td><span class='badge'>주식 아님</span></td>
         </tr>
   </table>
+  <div class="holdings-cards">
+    
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">SK하이닉스</span>
+            <span class="hcard-price">1,812,000 <span class='up'>+2.03%</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v down">-6.47%</span></div>
+            <div><span class="k">평가손익</span><span class="v down">-5,633,358</span></div>
+            <div><span class="k">보유수량</span><span class="v">45</span></div>
+            <div><span class="k">평가금액</span><span class="v">81,364,689</span></div>
+            <div><span class="k">평균단가</span><span class="v">1,933,000</span></div>
+            <div><span class="k">BEP단가</span><span class="v">1,937,456</span></div>
+          </div>
+          
+        </div>
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">CMA RP</span>
+            <span class="hcard-price">- <span class='muted'>-</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v up">0.03%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">474</span></div>
+            <div><span class="k">보유수량</span><span class="v">1,443,092</span></div>
+            <div><span class="k">평가금액</span><span class="v">1,443,566</span></div>
+            <div><span class="k">평균단가</span><span class="v">-</span></div>
+            <div><span class="k">BEP단가</span><span class="v">-</span></div>
+          </div>
+          <div class="hcard-badges"><span class='badge'>주식 아님</span></div>
+        </div>
+  </div>
 
   <h3>당일 매매내역</h3>
+  <div class="table-wrap">
   <table class="trades-table">
     <thead>
     <tr>
@@ -324,6 +472,7 @@
         </tr>
     </tbody>
   </table>
+  </div>
 </div>
 
   <script>
