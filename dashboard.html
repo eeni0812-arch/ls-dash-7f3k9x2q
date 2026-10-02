@@ -74,7 +74,7 @@
   <div class="topbar">
     <div>
       <h1>LS증권 자동매매 대시보드</h1>
-      <span class="updated">마지막 갱신: 2026-10-02 16:02:05 (최대 3분 이내)</span>
+      <span class="updated">마지막 갱신: 2026-10-02 16:03:04 (최대 3분 이내)</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
       <select id="accountSelect" class="account-select" onchange="switchAccount(this.value)">
@@ -87,12 +87,12 @@
   <div class="account-section" id="acc-01계좌" style="display:block;">
   <h2 class="account-title">01계좌</h2>
   <div class="summary">
-    <div><div class="label">추정자산</div><div class="value">26,151,582</div></div>
+    <div><div class="label">추정자산</div><div class="value">26,146,134</div></div>
     <div><div class="label">실현손익</div><div class="value up">0</div></div>
     <div><div class="label">매입금액</div><div class="value">21,313,418</div></div>
-    <div><div class="label">평가금액</div><div class="value">23,365,522</div></div>
-    <div><div class="label">평가손익</div><div class="value up">2,052,104</div></div>
-    <div><div class="label">수익률</div><div class="value up">9.63%</div></div>
+    <div><div class="label">평가금액</div><div class="value">23,360,074</div></div>
+    <div><div class="label">평가손익</div><div class="value up">2,046,656</div></div>
+    <div><div class="label">수익률</div><div class="value up">9.60%</div></div>
   </div>
 
   <table class="holdings-table">
@@ -106,12 +106,12 @@
             <td>76</td>
             <td>41,025</td>
             <td>41,120</td>
-            <td>42,800</td>
-            <td class='up'>+3.13%</td>
+            <td>42,750</td>
+            <td class='up'>+3.01%</td>
             <td>3,118,367</td>
-            <td>3,245,808</td>
-            <td class="up">127,441</td>
-            <td class="up">4.08%</td>
+            <td>3,242,016</td>
+            <td class="up">123,649</td>
+            <td class="up">3.96%</td>
             <td></td>
         </tr>
         <tr>
@@ -145,12 +145,12 @@
             <td>166</td>
             <td>18,090</td>
             <td>18,132</td>
-            <td>19,800</td>
-            <td class='down'>-1.74%</td>
+            <td>19,790</td>
+            <td class='down'>-1.79%</td>
             <td>3,003,390</td>
-            <td>3,279,734</td>
-            <td class="up">276,344</td>
-            <td class="up">9.20%</td>
+            <td>3,278,078</td>
+            <td class="up">274,688</td>
+            <td class="up">9.14%</td>
             <td><span class='badge'>BEP보호모드</span> <span class='badge'>10%초과알림</span> <span class='badge'>10%룰실행</span></td>
         </tr>
         <tr>
@@ -185,13 +185,13 @@
         <div class="hcard">
           <div class="hcard-top">
             <span class="hcard-name">디아이</span>
-            <span class="hcard-price">42,800 <span class='up'>+3.13%</span></span>
+            <span class="hcard-price">42,750 <span class='up'>+3.01%</span></span>
           </div>
           <div class="hcard-grid">
-            <div><span class="k">수익률</span><span class="v up">4.08%</span></div>
-            <div><span class="k">평가손익</span><span class="v up">127,441</span></div>
+            <div><span class="k">수익률</span><span class="v up">3.96%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">123,649</span></div>
             <div><span class="k">보유수량</span><span class="v">76</span></div>
-            <div><span class="k">평가금액</span><span class="v">3,245,808</span></div>
+            <div><span class="k">평가금액</span><span class="v">3,242,016</span></div>
             <div><span class="k">평균단가</span><span class="v">41,025</span></div>
             <div><span class="k">BEP단가</span><span class="v">41,120</span></div>
           </div>
@@ -230,13 +230,13 @@
         <div class="hcard">
           <div class="hcard-top">
             <span class="hcard-name">샘씨엔에스</span>
-            <span class="hcard-price">19,800 <span class='down'>-1.74%</span></span>
+            <span class="hcard-price">19,790 <span class='down'>-1.79%</span></span>
           </div>
           <div class="hcard-grid">
-            <div><span class="k">수익률</span><span class="v up">9.20%</span></div>
-            <div><span class="k">평가손익</span><span class="v up">276,344</span></div>
+            <div><span class="k">수익률</span><span class="v up">9.14%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">274,688</span></div>
             <div><span class="k">보유수량</span><span class="v">166</span></div>
-            <div><span class="k">평가금액</span><span class="v">3,279,734</span></div>
+            <div><span class="k">평가금액</span><span class="v">3,278,078</span></div>
             <div><span class="k">평균단가</span><span class="v">18,090</span></div>
             <div><span class="k">BEP단가</span><span class="v">18,132</span></div>
           </div>
@@ -351,6 +351,6 @@
   </div>
 
   <h2 style="margin-top:32px;">최근 매매기록</h2>
-  <div class='log'>[2026-10-02 16:02:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 16:01:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 16:00:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:59:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:58:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:57:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:56:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:55:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:54:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:53:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:52:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:51:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:50:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:49:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:48:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:47:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:46:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:45:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:44:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:43:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:42:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:41:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:40:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:39:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:38:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:37:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:36:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:35:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:34:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:33:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:32:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:31:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:30:08] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:29:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:28:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:27:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:26:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:25:11] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:24:10] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:23:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:22:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:21:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:20:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:19:12] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:18:11] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:17:12] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:16:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:15:13] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:14:12] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:13:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div>
+  <div class='log'>[2026-10-02 16:03:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 16:02:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 16:01:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 16:00:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:59:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:58:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:57:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:56:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:55:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:54:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:53:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:52:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:51:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:50:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:49:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:48:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:47:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:46:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:45:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:44:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:43:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:42:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:41:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:40:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:39:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:38:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:37:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:36:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:35:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:34:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:33:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:32:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:31:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:30:08] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:29:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:28:03] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:27:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:26:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:25:11] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:24:10] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:23:05] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:22:06] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:21:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:20:07] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:19:12] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:18:11] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:17:12] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:16:04] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:15:13] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 15:14:12] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div>
 </body>
 </html>
