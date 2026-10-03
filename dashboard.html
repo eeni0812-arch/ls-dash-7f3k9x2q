@@ -74,11 +74,11 @@
   <div class="topbar">
     <div>
       <h1>LS증권 자동매매 대시보드</h1>
-      <span class="updated">마지막 갱신: 2026-10-03 23:47:08 (최대 3분 이내)</span>
+      <span class="updated">마지막 갱신: 2026-10-03 23:48:03 (최대 3분 이내)</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
       <select id="accountSelect" class="account-select" onchange="switchAccount(this.value)">
-        <option value="01계좌">01계좌</option>
+        <option value="01계좌">01계좌</option><option value="04계좌">04계좌</option>
       </select>
       <button class="refresh-btn" onclick="location.reload()">새로고침</button>
     </div>
@@ -271,6 +271,98 @@
             <div><span class="k">BEP단가</span><span class="v">16,253</span></div>
           </div>
           <div class="hcard-badges"><span class='badge'>BEP보호모드</span> <span class='badge'>10%초과알림</span> <span class='badge'>10%룰실행</span></div>
+        </div>
+  </div>
+
+  <h3>당일 매매내역</h3>
+  <div class="table-wrap">
+  <table class="trades-table">
+    <thead>
+    <tr>
+      <th class="sortable" onclick="sortTrades(this)" data-order="asc" title="클릭: 오름차순/내림차순 전환">종목명 ▲</th><th>구분</th><th>수량</th><th>단가</th><th>거래금액</th>
+      <th>수수료</th><th>세금</th><th>순금액</th><th>추정실현손익</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr><td colspan='9'>당일 매매내역 없음</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div><div class="account-section" id="acc-04계좌" style="display:none;">
+  <h2 class="account-title">04계좌</h2>
+  <div class="summary">
+    <div><div class="label">추정자산</div><div class="value">87,689,885</div></div>
+    <div><div class="label">실현손익</div><div class="value up">0</div></div>
+    <div><div class="label">매입금액</div><div class="value">88,441,139</div></div>
+    <div><div class="label">평가금액</div><div class="value">84,155,462</div></div>
+    <div><div class="label">평가손익</div><div class="value down">-4,285,677</div></div>
+    <div><div class="label">수익률</div><div class="value down">-4.85%</div></div>
+  </div>
+
+  <table class="holdings-table">
+    <tr>
+      <th>종목명</th><th>보유수량</th><th>평균단가</th><th>BEP단가</th><th>현재가</th><th>등락률</th>
+      <th>매입금액</th><th>평가금액</th><th>평가손익</th><th>수익률</th><th>상태</th>
+    </tr>
+    
+        <tr>
+            <td class="name">SK하이닉스</td>
+            <td>45</td>
+            <td>1,933,000</td>
+            <td>1,937,456</td>
+            <td>1,842,000</td>
+            <td class='up'>+0.49%</td>
+            <td>86,998,047</td>
+            <td>82,711,787</td>
+            <td class="down">-4,286,260</td>
+            <td class="down">-4.92%</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td class="name">CMA RP</td>
+            <td>1,443,092</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>1,443,092</td>
+            <td>1,443,675</td>
+            <td class="up">583</td>
+            <td class="up">0.04%</td>
+            <td><span class='badge'>주식 아님</span></td>
+        </tr>
+  </table>
+  <div class="holdings-cards">
+    
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">SK하이닉스</span>
+            <span class="hcard-price">1,842,000 <span class='up'>+0.49%</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v down">-4.92%</span></div>
+            <div><span class="k">평가손익</span><span class="v down">-4,286,260</span></div>
+            <div><span class="k">보유수량</span><span class="v">45</span></div>
+            <div><span class="k">평가금액</span><span class="v">82,711,787</span></div>
+            <div><span class="k">평균단가</span><span class="v">1,933,000</span></div>
+            <div><span class="k">BEP단가</span><span class="v">1,937,456</span></div>
+          </div>
+          
+        </div>
+        <div class="hcard">
+          <div class="hcard-top">
+            <span class="hcard-name">CMA RP</span>
+            <span class="hcard-price">- <span class='muted'>-</span></span>
+          </div>
+          <div class="hcard-grid">
+            <div><span class="k">수익률</span><span class="v up">0.04%</span></div>
+            <div><span class="k">평가손익</span><span class="v up">583</span></div>
+            <div><span class="k">보유수량</span><span class="v">1,443,092</span></div>
+            <div><span class="k">평가금액</span><span class="v">1,443,675</span></div>
+            <div><span class="k">평균단가</span><span class="v">-</span></div>
+            <div><span class="k">BEP단가</span><span class="v">-</span></div>
+          </div>
+          <div class="hcard-badges"><span class='badge'>주식 아님</span></div>
         </div>
   </div>
 
