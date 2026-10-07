@@ -77,7 +77,7 @@
   <div class="topbar">
     <div>
       <h1>LS증권 자동매매 대시보드</h1>
-      <span class="updated">마지막 갱신: 2026-10-08 08:46:05 (최대 3분 이내)</span>
+      <span class="updated">마지막 갱신: 2026-10-08 08:47:04 (최대 3분 이내)</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
       <select id="accountSelect" class="account-select" onchange="switchAccount(this.value)">
@@ -90,12 +90,12 @@
   <div class="account-section" id="acc-01계좌" style="display:block;">
   <h2 class="account-title">01계좌</h2>
   <div class="summary">
-    <div><div class="label">추정자산</div><div class="value">25,509,093</div></div>
+    <div><div class="label">추정자산</div><div class="value">25,511,588</div></div>
     <div><div class="label">실현손익</div><div class="value up">0</div></div>
     <div><div class="label">매입금액</div><div class="value">3,055,737</div></div>
-    <div><div class="label">평가금액</div><div class="value">2,917,847</div></div>
-    <div><div class="label">평가손익</div><div class="value down">-137,890</div></div>
-    <div><div class="label">수익률</div><div class="value down">-4.51%</div></div>
+    <div><div class="label">평가금액</div><div class="value">2,920,342</div></div>
+    <div><div class="label">평가손익</div><div class="value down">-135,395</div></div>
+    <div><div class="label">수익률</div><div class="value down">-4.43%</div></div>
   </div>
 
   <table class="holdings-table">
@@ -109,12 +109,12 @@
             <td>1</td>
             <td>272,000</td>
             <td>272,627</td>
-            <td>270,000</td>
-            <td class='up'>+0.56%</td>
+            <td>271,000</td>
+            <td class='up'>+0.93%</td>
             <td>272,040</td>
-            <td>267,924</td>
-            <td class="down">-4,116</td>
-            <td class="down">-1.51%</td>
+            <td>270,419</td>
+            <td class="down">-1,621</td>
+            <td class="down">-0.60%</td>
             <td></td>
         </tr>
         <tr>
@@ -127,7 +127,7 @@
             <td>2,783,697</td>
             <td>2,649,923</td>
             <td class="down">-133,774</td>
-            <td class="down">-4.80%</td>
+            <td class="down">-4.81%</td>
             <td></td>
         </tr>
   </table>
@@ -136,13 +136,13 @@
         <div class="hcard">
           <div class="hcard-top">
             <span class="hcard-name">삼성전자</span>
-            <span class="hcard-price">270,000 <span class='up'>+0.56%</span></span>
+            <span class="hcard-price">271,000 <span class='up'>+0.93%</span></span>
           </div>
           <div class="hcard-grid">
-            <div><span class="k">수익률</span><span class="v down">-1.51%</span></div>
-            <div><span class="k">평가손익</span><span class="v down">-4,116</span></div>
+            <div><span class="k">수익률</span><span class="v down">-0.60%</span></div>
+            <div><span class="k">평가손익</span><span class="v down">-1,621</span></div>
             <div><span class="k">보유수량</span><span class="v">1</span></div>
-            <div><span class="k">평가금액</span><span class="v">267,924</span></div>
+            <div><span class="k">평가금액</span><span class="v">270,419</span></div>
             <div><span class="k">평균단가</span><span class="v">272,000</span></div>
             <div><span class="k">BEP단가</span><span class="v">272,627</span></div>
           </div>
@@ -154,7 +154,7 @@
             <span class="hcard-price">8,180 <span class=''>+0.00%</span></span>
           </div>
           <div class="hcard-grid">
-            <div><span class="k">수익률</span><span class="v down">-4.80%</span></div>
+            <div><span class="k">수익률</span><span class="v down">-4.81%</span></div>
             <div><span class="k">평가손익</span><span class="v down">-133,774</span></div>
             <div><span class="k">보유수량</span><span class="v">324</span></div>
             <div><span class="k">평가금액</span><span class="v">2,649,923</span></div>
@@ -320,8 +320,9 @@
   </script>
 
   <div style="font-size:12px; color:#999; margin-top:6px;">
-    ※ 현재가·등락률은 KRX+넥스트레이드 통합 시세입니다(프리·애프터마켓 반영). 평가손익·수익률과 매도 규칙은 KRX 기준이라
-    장 시작 전·마감 후에는 현재가와 약간 어긋날 수 있습니다. († 표시는 통합 시세 조회 실패로 KRX 현재가를 표시한 경우)<br>
+    ※ 현재가·등락률·평가금액·평가손익·수익률은 KRX+넥스트레이드 통합 시세 기준입니다(프리·애프터마켓 반영).
+    매도 규칙(10%·24%·BEP보호·10일선)은 KRX 가격으로만 09:00~15:20에 판정합니다.
+    († 표시는 통합 시세 조회 실패로 KRX 값을 표시한 경우)<br>
     ※ BEP단가 = 평균단가에 수수료·세금 등 거래비용을 더한 손익분기 가격이며, BEP보호모드 손절 기준입니다.
     (* 표시는 BEP단가 조회 실패로 평균단가를 대신 표시·사용한 경우)<br>
     ※ 추정실현손익은 매도 시점의 평균단가(BEP)를 기준으로 계산한 추정치입니다.
