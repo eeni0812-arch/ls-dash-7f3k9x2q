@@ -1,5 +1,6 @@
-/* history_tabs.js — 대시보드 기록 탭 (매매일지·매도실현손익·일자별실현손익·예탁자산증감·수익률추이)
-   history.json(같은 폴더)을 읽어 계좌·일/월·기간 필터로 표시. history_collector.py가 함께 업로드합니다. */
+/* history_tabs.js — 대시보드 기록 탭 (매매일지·매도실현손익·일자별실현손익·예탁자산증감·수익률추이·매매 성적)
+   history.json(같은 폴더)을 읽어 계좌(전체 합산 포함)·일/월·기간 필터로 표시. history_collector.py가 함께 업로드합니다.
+   종목명을 누르면 차트 팝업: 내 매매 차트(charts.json 일봉 + 매수▲·매도▼ + 10·20일선) / 네이버 일·주·월봉 이미지 */
 (function () {
   "use strict";
 
@@ -111,6 +112,7 @@
       ".ht-chart svg{width:100%;height:180px;display:block}",
       "@media (max-width:760px){.ht-wrap th,.ht-wrap td{padding:7px 9px;font-size:12px}.ht-sum{grid-template-columns:repeat(2,1fr)}}"
     ].join("\n");
+    css += "\n" + chartStyle();
     var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
   }
 
@@ -214,6 +216,7 @@
   }
   function td(v, c) { return "<td" + (c ? " class='" + c + "'" : "") + ">" + v + "</td>"; }
   function tdl(v) { return "<td class='name' style='text-align:left'>" + esc(v) + "</td>"; }
+  function tdc(code) { return "<td class='name' style='text-align:left' data-code='" + esc(code) + "'>" + esc(nameOf(code)) + "</td>"; }
   function sumBoxes(items) {
     return "<div class='ht-sum'>" + items.map(function (it) {
       return "<div><div class='k'>" + it[0] + "</div><div class='v " + (it[2] || "") + "'>" + it[1] + "</div></div>";
@@ -234,7 +237,7 @@
     var rows = Object.keys(g).map(function (k) { return g[k]; }).sort(function (x, y) {
       return x.p < y.p ? 1 : x.p > y.p ? -1 : nameOf(x.code).localeCompare(nameOf(y.code), "ko");
     }).map(function (r) {
-      return "<tr>" + td(r.p) + tdl(nameOf(r.code)) +
+      return "<tr>" + td(r.p) + tdc(r.code) +
         td(r.bq ? won(r.bq) : "-") + td(r.bq ? won(r.ba / r.bq) : "-") + td(r.bq ? won(r.ba) : "-") +
         td(r.sq ? won(r.sq) : "-") + td(r.sq ? won(r.sa / r.sq) : "-") + td(r.sq ? won(r.sa) : "-") +
         td(won(r.fee)) + td(won(r.tax)) + "</tr>";
@@ -261,7 +264,7 @@
     }).map(function (r) {
       var known = r.kq > 0, rate = known && r.ba ? r.pnl / r.ba * 100 : null;
       var pnlTxt = known ? won(r.pnl) + (r.unk ? " *" : "") : "확인불가";
-      return "<tr>" + td(r.p) + tdl(nameOf(r.code)) + td(pnlTxt, known ? cls(r.pnl) : "") + td(pct(rate), cls(rate)) +
+      return "<tr>" + td(r.p) + tdc(r.code) + td(pnlTxt, known ? cls(r.pnl) : "") + td(pct(rate), cls(rate)) +
         td(won(r.q)) + td(won(r.sa / r.q)) + td(won(r.sa)) + td(won(r.fee)) + td(won(r.tax)) +
         td(known ? won(r.ba / r.kq) : "-") + td(known ? won(r.ba) : "-") + td(known ? won(r.bf) : "-") + "</tr>";
     });
@@ -435,6 +438,219 @@
       "<div style='display:flex;justify-content:space-between;font-size:11px;color:#999;padding:2px 4px'><span>" + pts[0][0] + "</span><span>" +
       (isPct ? pct(lastV) : won(lastV)) + "</span><span>" + pts[pts.length - 1][0] + "</span></div></div>";
   }
+
+  // ── 종목 차트 팝업: 종목명(data-code)을 누르면 열림 ──
+  //   내 매매 차트 = charts.json(LS 일봉) + 내 매수▲/매도▼ + 10·20일선 / 일·주·월봉 = 네이버 차트 이미지
+  var LWC_URL = "https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js";
+  var CHARTS = null, CHARTS_LOADING = [], LWC_LOADING = null, CV = { code: "", name: "", view: "my", chart: null };
+
+  function loadScript(src, ok, bad) {
+    var sc = document.createElement("script"); sc.src = src;
+    sc.onload = ok; sc.onerror = bad; document.head.appendChild(sc);
+  }
+  function loadCharts(cb) {
+    if (CHARTS) return cb(CHARTS);
+    CHARTS_LOADING.push(cb);
+    if (CHARTS_LOADING.length > 1) return;
+    function done(j) { CHARTS = j || { codes: {} }; var l = CHARTS_LOADING; CHARTS_LOADING = []; l.forEach(function (f) { f(CHARTS); }); }
+    function viaScript() {
+      loadScript("charts_data.js?t=" + Date.now(), function () { done(window.CHART_DATA); }, function () { done(null); });
+    }
+    if (location.protocol === "file:" || !window.fetch) return viaScript();
+    fetch("charts.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error(r.status); return r.json();
+    }).then(done).catch(viaScript);
+  }
+  function loadHistory(cb) {
+    if (DATA) return cb();
+    function viaScript() {
+      loadScript("history_data.js?t=" + Date.now(), function () { if (!DATA && window.HISTORY_DATA) DATA = window.HISTORY_DATA; cb(); }, function () { cb(); });
+    }
+    if (location.protocol === "file:" || !window.fetch) return viaScript();
+    fetch("history.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error(r.status); return r.json();
+    }).then(function (j) { if (!DATA) DATA = j; cb(); }).catch(viaScript);
+  }
+  function loadLwc(cb) {
+    if (window.LightweightCharts) return cb(true);
+    if (LWC_LOADING) { LWC_LOADING.push(cb); return; }
+    LWC_LOADING = [cb];
+    loadScript(LWC_URL, function () { var l = LWC_LOADING; LWC_LOADING = null; l.forEach(function (f) { f(true); }); },
+      function () { var l = LWC_LOADING; LWC_LOADING = null; l.forEach(function (f) { f(false); }); });
+  }
+
+  function chartStyle() {
+    return [
+      "[data-code]{cursor:pointer;color:#3b4ab0;text-decoration:underline dotted;text-underline-offset:3px}",
+      ".hc-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px}",
+      ".hc-box{background:#fff;border-radius:12px;width:min(980px,100%);max-height:96vh;overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.3);padding:14px 16px}",
+      ".hc-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}",
+      ".hc-title{font-size:18px;font-weight:bold}.hc-code{color:#888;font-size:13px}",
+      ".hc-x{margin-left:auto;border:none;background:#eee;border-radius:8px;width:34px;height:34px;font-size:18px;cursor:pointer}",
+      ".hc-seg{display:inline-flex;border:1px solid #3b4ab0;border-radius:6px;overflow:hidden}",
+      ".hc-seg button{border:none;background:#fff;color:#3b4ab0;padding:6px 12px;cursor:pointer;font-size:13px}",
+      ".hc-seg button.on{background:#3b4ab0;color:#fff}",
+      ".hc-chart{width:100%;height:440px;position:relative}",
+      ".hc-legend{font-size:12px;color:#555;margin:6px 0 4px;min-height:18px}",
+      ".hc-legend b{font-weight:normal;padding:0 6px 0 0;white-space:nowrap;display:inline-block}",
+      ".hc-img{width:100%;max-width:700px;display:block;margin:0 auto}",
+      ".hc-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;color:#999;margin-top:8px}",
+      ".hc-foot a{color:#3b4ab0}",
+      ".hc-trades{margin-top:10px}.hc-trades table{width:100%;font-size:13px}",
+      "@media (max-width:760px){.hc-chart{height:320px}.hc-box{padding:10px}.hc-ov{padding:4px}}"
+    ].join("\n");
+  }
+
+  // 이 종목의 내 매매(현재 선택 계좌)를 날짜·구분별로 합침
+  function myTrades(code) {
+    var a = DATA ? acc() : null, g = {};
+    ((a && a.trades) || []).forEach(function (t) {
+      if (t.code !== code) return;
+      var k = t.date + "|" + t.side;
+      var r = g[k] || (g[k] = { date: t.date, side: t.side, qty: 0, amt: 0, pnl: null });
+      r.qty += t.qty; r.amt += t.amt;
+    });
+    ((a && a.sells) || []).forEach(function (s) {
+      if (s.code !== code || s.pnl === null || s.pnl === undefined) return;
+      var r = g[s.date + "|매도"]; if (r) r.pnl = (r.pnl || 0) + s.pnl;
+    });
+    return Object.keys(g).sort().map(function (k) { return g[k]; });
+  }
+  function ma(closes, n) {
+    var out = [], s = 0;
+    for (var i = 0; i < closes.length; i++) {
+      s += closes[i]; if (i >= n) s -= closes[i - n];
+      out.push(i >= n - 1 ? s / n : null);
+    }
+    return out;
+  }
+  function dstr(n) { n = String(n); return n.slice(0, 4) + "-" + n.slice(4, 6) + "-" + n.slice(6, 8); }
+
+  function openChart(code, name) {
+    CV.code = code; CV.name = name || nameOf(code);
+    var ov = document.getElementById("hcOv");
+    if (!ov) {
+      ov = document.createElement("div"); ov.id = "hcOv"; ov.className = "hc-ov";
+      ov.onclick = function (e) { if (e.target === ov) closeChart(); };
+      document.body.appendChild(ov);
+    }
+    ov.style.display = "flex";
+    ov.innerHTML = "<div class='hc-box'><div class='hc-head'><span class='hc-title'>" + esc(CV.name) + "</span><span class='hc-code'>" + esc(code) +
+      "</span><span class='hc-seg'>" + [["my", "내 매매 차트"], ["day", "일봉"], ["week", "주봉"], ["month", "월봉"]].map(function (v) {
+        return "<button data-hcv='" + v[0] + "'>" + v[1] + "</button>";
+      }).join("") + "</span><button class='hc-x' title='닫기'>×</button></div><div id='hcBody'></div>" +
+      "<div class='hc-foot'><a href='https://finance.naver.com/item/main.naver?code=" + encodeURIComponent(code) + "' target='_blank' rel='noopener'>네이버 증권에서 보기 ↗</a>" +
+      "<span>차트: <a href='https://www.tradingview.com/' target='_blank' rel='noopener'>TradingView Lightweight Charts</a> · 일/주/월봉 이미지: 네이버</span></div></div>";
+    ov.querySelector(".hc-x").onclick = closeChart;
+    ov.querySelectorAll("[data-hcv]").forEach(function (b) { b.onclick = function () { showView(b.getAttribute("data-hcv")); }; });
+    showView(load("chartView", "my"));
+  }
+  function closeChart() {
+    if (CV.chart) { try { CV.chart.remove(); } catch (e) {} CV.chart = null; }
+    var ov = document.getElementById("hcOv"); if (ov) { ov.style.display = "none"; ov.innerHTML = ""; }
+  }
+  function showView(v) {
+    CV.view = v; save("chartView", v);
+    if (CV.chart) { try { CV.chart.remove(); } catch (e) {} CV.chart = null; }
+    document.querySelectorAll("[data-hcv]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-hcv") === v); });
+    var body = document.getElementById("hcBody");
+    if (v !== "my") { naverImg(body, v); return; }
+    body.innerHTML = "<div class='ht-msg'>차트 불러오는 중…</div>";
+    var code = CV.code;
+    loadHistory(function () { loadCharts(function (C) { loadLwc(function (ok) {
+      if (CV.code !== code || CV.view !== "my") return;
+      var ch = C && C.codes ? C.codes[code] : null;
+      if (!ok) { naverImg(body, "day", "차트 프로그램을 불러오지 못해 네이버 일봉으로 대신 보여드립니다."); return; }
+      if (!ch || !ch.d || !ch.d.length) { naverImg(body, "day", "이 종목의 일봉 자료가 아직 없습니다 (저녁 기록 갱신 때 추가됩니다). 네이버 일봉으로 대신 보여드립니다."); return; }
+      drawMy(body, code, ch);
+    }); }); });
+  }
+  function naverImg(body, p, note) {
+    body.innerHTML = (note ? "<div class='ht-note' style='margin:0 0 8px'>" + esc(note) + "</div>" : "") +
+      "<img class='hc-img' alt='" + esc(CV.name) + " 차트' src='https://ssl.pstatic.net/imgfinance/chart/item/candle/" + p + "/" +
+      encodeURIComponent(CV.code) + ".png?t=" + iso(new Date()) + "'>";
+    var img = body.querySelector("img");
+    img.onerror = function () { body.innerHTML = "<div class='ht-msg'>네이버 차트 이미지를 불러오지 못했습니다. 아래 '네이버 증권에서 보기'를 눌러 주세요.</div>"; };
+  }
+
+  function drawMy(body, code, ch) {
+    var trades = myTrades(code);
+    body.innerHTML = "<div class='hc-legend' id='hcLeg'></div><div class='hc-chart' id='hcChart'></div><div class='hc-trades' id='hcTrades'></div>";
+    var el = document.getElementById("hcChart"), LW = window.LightweightCharts;
+    var chart = LW.createChart(el, {
+      width: el.clientWidth, height: el.clientHeight,
+      layout: { background: { color: "#ffffff" }, textColor: "#333", fontSize: 11 },
+      grid: { vertLines: { color: "#f1f1f1" }, horzLines: { color: "#f1f1f1" } },
+      rightPriceScale: { borderColor: "#ddd" },
+      timeScale: { borderColor: "#ddd", rightOffset: 3 },
+      localization: { locale: "ko-KR", priceFormatter: function (p) { return Math.round(p).toLocaleString("ko-KR"); } }
+    });
+    CV.chart = chart;
+    var candle = chart.addCandlestickSeries({ upColor: "#d32f2f", downColor: "#1565c0", borderUpColor: "#d32f2f", borderDownColor: "#1565c0",
+      wickUpColor: "#d32f2f", wickDownColor: "#1565c0" });
+    var bars = ch.d.map(function (d, i) { return { time: dstr(d), open: ch.o[i], high: ch.h[i], low: ch.l[i], close: ch.c[i] }; });
+    candle.setData(bars);
+    var m10 = ma(ch.c, 10), m20 = ma(ch.c, 20);
+    var s10 = chart.addLineSeries({ color: "#ef6c00", lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    var s20 = chart.addLineSeries({ color: "#2e7d32", lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    s10.setData(bars.map(function (b, i) { return m10[i] === null ? { time: b.time } : { time: b.time, value: m10[i] }; }));
+    s20.setData(bars.map(function (b, i) { return m20[i] === null ? { time: b.time } : { time: b.time, value: m20[i] }; }));
+    // 매매 표시 (차트 기간 안의 날만)
+    var first = bars[0].time, last = bars[bars.length - 1].time, inChart = {};
+    bars.forEach(function (b) { inChart[b.time] = true; });
+    var markers = [];
+    trades.forEach(function (t) {
+      if (!inChart[t.date]) return;
+      var buy = t.side === "매수";
+      markers.push({ time: t.date, position: buy ? "belowBar" : "aboveBar", shape: buy ? "arrowUp" : "arrowDown",
+        color: buy ? "#d32f2f" : "#1565c0", text: (buy ? "매수 " : "매도 ") + won(t.qty) });
+    });
+    markers.sort(function (a, b) { return a.time < b.time ? -1 : a.time > b.time ? 1 : 0; });
+    candle.setMarkers(markers);
+    // 처음 보이는 범위: 첫 매매 30봉 전 ~ 마지막
+    var idx = 0;
+    if (markers.length) { for (var i = 0; i < bars.length; i++) if (bars[i].time >= markers[0].time) { idx = i; break; } }
+    else idx = Math.max(0, bars.length - 120);
+    chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, idx - 30), to: bars.length + 2 });
+    // 범례: 마우스 올린 날의 시가·고가·저가·종가
+    var leg = document.getElementById("hcLeg"), byTime = {};
+    bars.forEach(function (b, i) { byTime[b.time] = i; });
+    function legend(i) {
+      var b = bars[i], prev = i > 0 ? bars[i - 1].close : null, chg = prev ? (b.close / prev - 1) * 100 : null;
+      var tr = trades.filter(function (t) { return t.date === b.time; }).map(function (t) {
+        return "<b style='color:" + (t.side === "매수" ? "#d32f2f" : "#1565c0") + "'>" + t.side + " " + won(t.qty) + "주 @" + won(t.amt / t.qty) + "</b>";
+      }).join("");
+      leg.innerHTML = "<b>" + b.time + "</b><b>시 " + won(b.open) + "</b><b>고 " + won(b.high) + "</b><b>저 " + won(b.low) + "</b><b>종 " + won(b.close) +
+        "</b><b class='" + cls(chg) + "'>" + pct(chg) + "</b><b style='color:#ef6c00'>10일선 " + won(m10[i]) + "</b><b style='color:#2e7d32'>20일선 " + won(m20[i]) + "</b>" + tr;
+    }
+    legend(bars.length - 1);
+    chart.subscribeCrosshairMove(function (p) {
+      if (!p || !p.time) { legend(bars.length - 1); return; }
+      var t = typeof p.time === "string" ? p.time : (p.time.year + "-" + ("0" + p.time.month).slice(-2) + "-" + ("0" + p.time.day).slice(-2));
+      if (byTime[t] !== undefined) legend(byTime[t]);
+    });
+    function resize() { if (CV.chart === chart) chart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); }
+    window.addEventListener("resize", resize);
+    // 이 종목 매매 목록
+    var rows = trades.slice().reverse().map(function (t) {
+      return "<tr>" + td(t.date) + td(t.side, t.side === "매수" ? "up" : "down") + td(won(t.qty)) + td(won(t.amt / t.qty)) + td(won(t.amt)) +
+        td(t.pnl === null ? "-" : won(t.pnl), t.pnl === null ? "" : cls(t.pnl)) + "</tr>";
+    });
+    var out = trades.filter(function (t) { return t.date < first || t.date > last; }).length;
+    document.getElementById("hcTrades").innerHTML = trades.length ?
+      table(["매매일", "구분", "수량", "평균단가", "금액", "실현손익"], rows) +
+      "<div class='ht-note'>▲ 매수 · ▼ 매도 (계좌: " + esc(account()) + ") · 주황선 10일선 · 초록선 20일선 · 수정주가 기준" +
+      (out ? " · 차트 기간 밖 매매 " + out + "건은 표에만 표시" : "") + " · 일봉 기준: " + esc((CHARTS && CHARTS.generated_at) || "") + "</div>" :
+      "<div class='ht-note'>선택한 계좌(" + esc(account()) + ")에는 이 종목 매매 기록이 없습니다. 위쪽 기록 탭의 계좌 선택을 바꿔 보세요.</div>";
+  }
+
+  document.addEventListener("click", function (e) {
+    var el = e.target && e.target.closest ? e.target.closest("[data-code]") : null;
+    if (!el) return;
+    e.preventDefault();
+    openChart(el.getAttribute("data-code"), (el.textContent || "").trim());
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeChart(); });
 
   // ── 그리기 ──
   function render() {
