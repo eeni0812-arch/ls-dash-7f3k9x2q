@@ -100,17 +100,27 @@
   function fetchData() {
     if (LOADING) return;
     LOADING = true;
-    document.getElementById("tab-history").innerHTML = "<div class='ht-msg'>기록을 불러오는 중…</div>";
-    fetch("history.json?t=" + Date.now()).then(function (r) {
+    var box = document.getElementById("tab-history");
+    box.innerHTML = "<div class='ht-msg'>기록을 불러오는 중…</div>";
+    function done(j) { DATA = j; LOADING = false; render(); }
+    function fail(msg) {
+      LOADING = false; LOAD_ERR = msg;
+      box.innerHTML = "<div class='ht-msg'>기록 파일을 불러오지 못했습니다.<br>" + esc(msg) +
+        "<br><small>history_data.js / history.json 이 대시보드와 같은 폴더에 있는지 확인해 주세요.</small></div>";
+    }
+    // 대체 방법: <script>로 history_data.js 읽기 (PC 파일로 직접 열어도 동작)
+    function viaScript(prevErr) {
+      var sc = document.createElement("script");
+      sc.src = "history_data.js?t=" + Date.now();
+      sc.onload = function () { if (window.HISTORY_DATA) done(window.HISTORY_DATA); else fail("history_data.js 내용 없음"); };
+      sc.onerror = function () { fail((prevErr ? prevErr + " / " : "") + "history_data.js 읽기 실패"); };
+      document.head.appendChild(sc);
+    }
+    if (location.protocol === "file:" || !window.fetch) { viaScript(""); return; }
+    fetch("history.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
-    }).then(function (j) { DATA = j; LOADING = false; render(); })
-      .catch(function (e) {
-        LOADING = false; LOAD_ERR = String(e);
-        document.getElementById("tab-history").innerHTML =
-          "<div class='ht-msg'>기록 파일(history.json)을 불러오지 못했습니다.<br>" + esc(LOAD_ERR) +
-          "<br><small>PC에서 파일을 직접 연 경우에는 표시되지 않습니다. 웹 주소(GitHub Pages)로 열어 주세요.</small></div>";
-      });
+    }).then(done).catch(function (e) { viaScript(String(e)); });
   }
 
   // ── 필터 막대 ──
