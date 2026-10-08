@@ -527,7 +527,7 @@
   var LWC_URL = "https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js";
   var MINUTES = null, LOADQ = {}, LWC_LOADING = null;
   var CV = { code: "", name: "", view: "my", chart: null, n: 0 };
-  var VIEWS = [["my", "일봉"], ["wk", "주봉"], ["mo", "월봉"], ["min", "5분봉"], ["area", "당일 흐름"]];
+  var VIEWS = [["my", "일봉"], ["wk", "주봉"], ["mo", "월봉"], ["min", "5분봉"], ["area", "당일 흐름"], ["inv", "투자자"]];
   // 봉 종류별 설정: 자료 키, 이동평균 이름, 기간 버튼, 대신 보여줄 네이버 이미지
   var KIND = {
     my: { key: "d", unit: "일", ranges: [["1개월", 21], ["3개월", 63], ["6개월", 126], ["1년", 250], ["전체", 0]], naver: "day", name: "일봉" },
@@ -684,6 +684,7 @@
     document.querySelectorAll("[data-hcv]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-hcv") === v); });
     var body = document.getElementById("hcBody");
     if (v === "area") { naverImg(body, v); return; }
+    if (v === "inv") { showInvestor(body, CV.code); return; }
     body.innerHTML = "<div class='ht-msg'>차트 불러오는 중…</div>";
     var code = CV.code, loader = v === "min" ? loadMinutes : function (cb) { loadChartOne(code, cb); };
     loadHistory(function () { loader(function (C) { loadLwc(function (ok) {
@@ -707,6 +708,50 @@
       }
     }); }); });
   }
+  // ── 종목별 투자자 매매추이 ([1702], 금액·백만원) — investors/종목코드.js ──
+  var INV_ONE = {}, INV_WAIT = {};
+  window.__invLoaded = function (code, data) {
+    INV_ONE[code] = data;
+    var l = INV_WAIT[code] || []; delete INV_WAIT[code];
+    l.forEach(function (f) { f(data); });
+  };
+  function loadInvOne(code, cb) {
+    if (INV_ONE.hasOwnProperty(code)) return cb(INV_ONE[code]);
+    if (INV_WAIT[code]) { INV_WAIT[code].push(cb); return; }
+    INV_WAIT[code] = [cb];
+    function miss() { if (INV_WAIT[code]) window.__invLoaded(code, null); }
+    loadScript("investors/" + encodeURIComponent(code) + ".js?t=" + Math.floor(Date.now() / 600000), function () { setTimeout(miss, 0); }, miss);
+  }
+  function showInvestor(body, code) {
+    body.innerHTML = "<div class='ht-msg'>투자자 자료 불러오는 중…</div>";
+    loadInvOne(code, function (d) {
+      if (CV.code !== code || CV.view !== "inv") return;
+      if (!d || !d.rows || !d.rows.length) {
+        body.innerHTML = "<div class='ht-msg'>이 종목의 투자자 매매추이 자료가 없습니다.<br><small>보유 종목, 최근 90일 안에 매매한 종목, 최근 추세 스캔 종목만 매일 저녁 모아 둡니다.</small><br>" +
+          "<a href='https://finance.naver.com/item/frgn.naver?code=" + encodeURIComponent(code) + "' target='_blank' rel='noopener'>네이버 증권 외국인·기관 매매 보기 ↗</a></div>";
+        return;
+      }
+      var cols = d.cols, rows = d.rows;                     // [일자, 종가, 대비, 등락률, 거래량, 개인, 외국인, 기관계, ...]
+      function sum(n, idx) { return rows.slice(0, n).reduce(function (s, r) { return s + r[idx]; }, 0); }
+      function eok(v) { return "<span class='" + cls(v) + "'>" + (v > 0 ? "+" : "") + won(v) + "</span>"; }
+      var boxes = [5, 20].map(function (n) {
+        return "<div><div class='k'>최근 " + n + "일 누적 (백만원)</div><div class='v' style='font-size:13px'>개인 " + eok(sum(n, 5)) +
+          " · 외국인 " + eok(sum(n, 6)) + " · 기관 " + eok(sum(n, 7)) + "</div></div>";
+      }).join("");
+      var head = ["일자", "종가", "대비", "거래량"].concat(cols);
+      var trs = rows.map(function (r) {
+        var d8 = String(r[0]);
+        return "<tr>" + td(d8.slice(0, 4) + "/" + d8.slice(4, 6) + "/" + d8.slice(6)) + td(won(r[1]), cls(r[2])) +
+          td((r[2] > 0 ? "▲ " : r[2] < 0 ? "▼ " : "") + won(Math.abs(r[2])), cls(r[2])) + td(won(r[4])) +
+          r.slice(5).map(function (v) { return td(v ? won(v) : "", cls(v)); }).join("") + "</tr>";
+      });
+      body.innerHTML = "<div class='ht-sum' style='grid-template-columns:repeat(auto-fit,minmax(260px,1fr))'>" + boxes + "</div>" +
+        table(head, trs) +
+        "<div class='ht-note'>※ HTS [1702] 종목별 투자자 매매추이와 같은 구성 · 금액 기준 순매수(백만원) · 최근 " + rows.length +
+        "거래일 · 자료 기준일 " + esc(d.f || "") + " (매일 저녁 갱신)<br>※ 외국인 = 등록 외국인, 기타 = 기타법인 + 국가.</div>";
+    });
+  }
+
   function naverImg(body, p, note) {
     var kind = p === "area" ? "area/day" : "candle/" + p;
     body.innerHTML = (note ? "<div class='ht-note' style='margin:0 0 8px'>" + esc(note) + "</div>" : "") +
@@ -1028,7 +1073,10 @@
       return "<h3>" + title + " <small style='color:#888;font-weight:normal'>" + list.length + "종목</small></h3>" +
         (list.length ? table(head, rows) : "<div class='ht-msg'>없음</div>");
     }
-    box.innerHTML = (mkt ? mkt.outerHTML + (mktNote ? mktNote.outerHTML : "") : "") +
+    // 시장 현황 칸 복사: 그래프 색 구분(clipPath) id가 겹치면 숨은 보유현황 쪽을 가리켜 색이 안 나오므로 id를 바꿔서 복사
+    var ovb = document.querySelector("#tab-holdings .ov-bar");
+    function cloneHtml(el) { return el ? el.outerHTML.replace(/(sp[ud]\d+)/g, "$1_scan") : ""; }
+    box.innerHTML = cloneHtml(ovb) + (mkt ? cloneHtml(mkt) + (mktNote ? mktNote.outerHTML : "") : "") +
       "<div class='ht-bar'><span>스캔일</span><select id='scanDate'>" + days.map(function (d) {
         return "<option value='" + d + "'" + (d === day ? " selected" : "") + ">" + d + " (" + (SCAN.scans[d].time || "") + ")</option>";
       }).join("") + "</select><small style='color:#888'>매일 15:10 스캔 · 최근 " + days.length + "거래일 보관</small></div>" +
