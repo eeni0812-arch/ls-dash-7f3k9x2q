@@ -26,7 +26,17 @@
   function iso(d) { var m = d.getMonth() + 1, x = d.getDate(); return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (x < 10 ? "0" : "") + x; }
   function keyOf(date) { return S.unit === "month" ? date.slice(0, 7) : date; }
   function account() { var s = document.getElementById("accountSelect"); return s ? s.value : ""; }
-  function acc() { return DATA && DATA.accounts ? DATA.accounts[account()] : null; }
+  // 저녁 기록(history.json)에 오늘 체결이 아직 없으면, 대시보드에 함께 들어 있는 오늘 체결(TODAY_TRADES)을 붙여서 보여줌
+  function acc() {
+    var a = DATA && DATA.accounts ? DATA.accounts[account()] : null;
+    var T = window.TODAY_TRADES, t = T && T.accounts ? T.accounts[account()] : null;
+    if (T && T.names && DATA) { DATA.names = DATA.names || {}; for (var c in T.names) if (!DATA.names[c]) DATA.names[c] = T.names[c]; }
+    if (!t || !(t.trades || []).length) return a;
+    var base = a || { trades: [], sells: [], daily: [] };
+    var has = base.trades.some(function (x) { return x.date === T.date; });
+    if (has) return base;
+    return { trades: base.trades.concat(t.trades), sells: base.sells.concat(t.sells), daily: base.daily, today: true };
+  }
   function nameOf(code) { return (DATA && DATA.names && DATA.names[code]) || code; }
   function inRange(date) { return (!S.from || date >= S.from) && (!S.to || date <= S.to); }
 
