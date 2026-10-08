@@ -440,13 +440,19 @@
   }
 
   // ── 종목 차트 팝업: 종목명(data-code)을 누르면 열림 ──
-  //   매매 일봉 = charts.json(LS 일봉) + 내 매수▲/매도▼ + 10·20일선
-  //   매매 5분봉 = minutes.json(LS 5분봉) + 실제 체결 시각 ▲▼
-  //   당일 흐름·일봉·주봉·월봉 = 네이버 차트 이미지
+  //   일봉·주봉·월봉 = charts.json(LS 수정주가) + 내 매수▲/매도▼ + 10·20 이동평균 (확대·축소·기간 버튼)
+  //   5분봉 = minutes.json(LS 5분봉) + 실제 체결 시각 ▲▼
+  //   당일 흐름 = 네이버 이미지 (LS 자료가 없을 때도 네이버 이미지로 대신 표시)
   var LWC_URL = "https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js";
   var CHARTS = null, MINUTES = null, LOADQ = {}, LWC_LOADING = null;
   var CV = { code: "", name: "", view: "my", chart: null, n: 0 };
-  var VIEWS = [["my", "매매 일봉"], ["min", "매매 5분봉"], ["area", "당일 흐름"], ["day", "일봉"], ["week", "주봉"], ["month", "월봉"]];
+  var VIEWS = [["my", "일봉"], ["wk", "주봉"], ["mo", "월봉"], ["min", "5분봉"], ["area", "당일 흐름"]];
+  // 봉 종류별 설정: 자료 키, 이동평균 이름, 기간 버튼, 대신 보여줄 네이버 이미지
+  var KIND = {
+    my: { key: null, unit: "일", ranges: [["1개월", 21], ["3개월", 63], ["6개월", 126], ["1년", 250], ["전체", 0]], naver: "day", name: "일봉" },
+    wk: { key: "w", unit: "주", ranges: [["6개월", 26], ["1년", 52], ["2년", 104], ["3년", 156], ["전체", 0]], naver: "week", name: "주봉" },
+    mo: { key: "m", unit: "개월", ranges: [["1년", 12], ["3년", 36], ["5년", 60], ["10년", 120], ["전체", 0]], naver: "month", name: "월봉" }
+  };
 
   function loadScript(src, ok, bad) {
     var sc = document.createElement("script"); sc.src = src;
@@ -502,7 +508,8 @@
       ".hc-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;color:#999;margin-top:8px}",
       ".hc-foot a{color:#3b4ab0}",
       ".hc-trades{margin-top:10px}.hc-trades table{width:100%;font-size:13px}",
-      "@media (max-width:760px){.hc-chart{height:320px}.hc-box{padding:10px}.hc-ov{padding:4px}.hc-views button{padding:5px 8px;font-size:12px}}"
+      "@media (max-width:760px){.hc-chart{height:320px}.hc-box{padding:10px}.hc-ov{padding:4px}.hc-views button{padding:5px 8px;font-size:12px}" +
+      ".hc-range{gap:3px}.hc-range button{padding:4px 6px;min-width:0;font-size:11px}.hc-mk{margin-left:2px;font-size:12px}}"
     ].join("\n");
   }
 
@@ -566,6 +573,7 @@
     ov.querySelector(".hc-x").onclick = closeChart;
     ov.querySelectorAll("[data-hcv]").forEach(function (b) { b.onclick = function () { showView(b.getAttribute("data-hcv")); }; });
     var v = load("chartView", "my");
+    v = { day: "my", week: "wk", month: "mo" }[v] || v;
     showView(VIEWS.some(function (x) { return x[0] === v; }) ? v : "my");
   }
   function dropChart() { if (CV.chart) { try { CV.chart.remove(); } catch (e) {} CV.chart = null; } }
@@ -577,16 +585,19 @@
     CV.view = v; save("chartView", v); dropChart();
     document.querySelectorAll("[data-hcv]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-hcv") === v); });
     var body = document.getElementById("hcBody");
-    if (v !== "my" && v !== "min") { naverImg(body, v); return; }
+    if (v === "area") { naverImg(body, v); return; }
     body.innerHTML = "<div class='ht-msg'>차트 불러오는 중…</div>";
-    var code = CV.code, loader = v === "my" ? loadCharts : loadMinutes;
+    var code = CV.code, loader = v === "min" ? loadMinutes : loadCharts;
     loadHistory(function () { loader(function (C) { loadLwc(function (ok) {
       if (CV.code !== code || CV.view !== v) return;
-      if (!ok) { naverImg(body, v === "my" ? "day" : "area", "차트 프로그램을 불러오지 못해 네이버 이미지로 대신 보여드립니다."); return; }
-      if (v === "my") {
-        var ch = C && C.codes ? C.codes[code] : null;
-        if (!ch || !ch.d || !ch.d.length) { naverImg(body, "day", "이 종목의 일봉 자료가 아직 없습니다 (저녁 기록 갱신 때 추가됩니다). 네이버 일봉으로 대신 보여드립니다."); return; }
-        drawMy(body, code, ch);
+      if (!ok) { naverImg(body, KIND[v] ? KIND[v].naver : "area", "차트 프로그램을 불러오지 못해 네이버 이미지로 대신 보여드립니다."); return; }
+      if (KIND[v]) {
+        var K = KIND[v], ch = C && C.codes ? C.codes[code] : null, ser = ch ? (K.key ? ch[K.key] : ch) : null;
+        if (!ser || !ser.d || !ser.d.length) {
+          naverImg(body, K.naver, "이 종목의 " + K.name + " 자료가 아직 없습니다 (저녁 기록 갱신 때 추가됩니다). 네이버 " + K.name + " 이미지로 대신 보여드립니다 (확대 불가).");
+          return;
+        }
+        drawMy(body, code, ser, v);
       } else {
         var mm = C && C.codes ? C.codes[code] : null;
         if (!mm || !Object.keys(mm).length) {
@@ -667,9 +678,21 @@
   }
 
   // ── 매매 일봉 ──
-  function drawMy(body, code, ch) {
+  // 매매일이 어느 봉에 들어가는지: 일봉=그날, 주봉=그 주(월요일 기준), 월봉=그 달
+  function bucketOf(dateIso, kind) {
+    if (kind === "mo") return dateIso.slice(0, 7);
+    if (kind === "wk") {
+      var x = new Date(Date.UTC(+dateIso.slice(0, 4), +dateIso.slice(5, 7) - 1, +dateIso.slice(8, 10)));
+      x.setUTCDate(x.getUTCDate() - (x.getUTCDay() + 6) % 7);
+      return x.toISOString().slice(0, 10);
+    }
+    return dateIso;
+  }
+  function drawMy(body, code, ch, kind) {
+    kind = kind || "my";
+    var K = KIND[kind], U = K.unit;
     var trades = myTrades(code);
-    body.innerHTML = rangeBar([["1개월", 21], ["3개월", 63], ["6개월", 126], ["1년", 250], ["전체", 0]]) +
+    body.innerHTML = rangeBar(K.ranges) +
       "<div class='hc-legend' id='hcLeg'></div><div class='hc-chart' id='hcChart'></div><div class='hc-trades' id='hcTrades'></div>";
     var el = document.getElementById("hcChart"), chart = baseChart(el, false), candle = candles(chart);
     var bars = ch.d.map(function (d, i) { return { time: dstr(d), open: ch.o[i], high: ch.h[i], low: ch.l[i], close: ch.c[i] }; });
@@ -677,30 +700,38 @@
     var m10 = ma(ch.c, 10), m20 = ma(ch.c, 20);
     line(chart, "#ef6c00", 1).setData(bars.map(function (b, i) { return m10[i] === null ? { time: b.time } : { time: b.time, value: m10[i] }; }));
     line(chart, "#2e7d32", 2).setData(bars.map(function (b, i) { return m20[i] === null ? { time: b.time } : { time: b.time, value: m20[i] }; }));
-    var first = bars[0].time, last = bars[bars.length - 1].time, inChart = {};
-    bars.forEach(function (b) { inChart[b.time] = true; });
-    var markers = [];
+    var first = bars[0].time, last = bars[bars.length - 1].time, barOfKey = {};
+    bars.forEach(function (b, i) { barOfKey[bucketOf(b.time, kind)] = i; });
+    // 같은 봉·같은 구분의 매매는 하나로 합쳐 표시
+    var agg = {};
     trades.forEach(function (t) {
-      if (!inChart[t.date]) return;
-      var buy = t.side === "매수";
-      markers.push({ time: t.date, position: buy ? "belowBar" : "aboveBar", shape: buy ? "arrowUp" : "arrowDown",
-        color: buy ? "#d32f2f" : "#1565c0", text: (buy ? "매수 " : "매도 ") + won(t.qty) });
+      var i = barOfKey[bucketOf(t.date, kind)];
+      if (i === undefined) return;
+      var k = i + "|" + t.side, r = agg[k] || (agg[k] = { i: i, side: t.side, qty: 0, amt: 0 });
+      r.qty += t.qty; r.amt += t.amt;
     });
-    markers.sort(function (a, b) { return a.time < b.time ? -1 : a.time > b.time ? 1 : 0; });
+    var aggList = Object.keys(agg).map(function (k) { return agg[k]; }).sort(function (a, b) { return a.i - b.i; });
+    var markers = aggList.map(function (r) {
+      var buy = r.side === "매수";
+      return { time: bars[r.i].time, position: buy ? "belowBar" : "aboveBar", shape: buy ? "arrowUp" : "arrowDown",
+        color: buy ? "#d32f2f" : "#1565c0", text: (buy ? "매수 " : "매도 ") + won(r.qty) };
+    });
     bindMarks(body, candle, markers);
-    var idx = Math.max(0, bars.length - 120);
-    if (markers.length) { for (var i = 0; i < bars.length; i++) if (bars[i].time >= markers[0].time) { idx = i; break; } }
-    chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, idx - 30), to: bars.length + 2 });
+    var showN = { my: 120, wk: 104, mo: 120 }[kind], pad = { my: 30, wk: 10, mo: 6 }[kind];
+    var idx = Math.max(0, bars.length - showN);
+    if (aggList.length) idx = Math.min(idx, aggList[0].i);
+    chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, idx - pad), to: bars.length + 2 });
     bindRange(body, chart, bars.length, null);
     var leg = document.getElementById("hcLeg"), byTime = {};
     bars.forEach(function (b, i) { byTime[b.time] = i; });
     function legend(i) {
       var b = bars[i], prev = i > 0 ? bars[i - 1].close : null, chg = prev ? (b.close / prev - 1) * 100 : null;
-      var tr = trades.filter(function (t) { return t.date === b.time; }).map(function (t) {
-        return "<b style='color:" + (t.side === "매수" ? "#d32f2f" : "#1565c0") + "'>" + t.side + " " + won(t.qty) + "주 @" + won(t.amt / t.qty) + "</b>";
+      var tr = aggList.filter(function (r) { return r.i === i; }).map(function (r) {
+        return "<b style='color:" + (r.side === "매수" ? "#d32f2f" : "#1565c0") + "'>" + r.side + " " + won(r.qty) + "주 @" + won(r.amt / r.qty) + "</b>";
       }).join("");
-      leg.innerHTML = "<b>" + b.time + "</b><b>시 " + won(b.open) + "</b><b>고 " + won(b.high) + "</b><b>저 " + won(b.low) + "</b><b>종 " + won(b.close) +
-        "</b><b class='" + cls(chg) + "'>" + pct(chg) + "</b><b style='color:#ef6c00'>10일선 " + won(m10[i]) + "</b><b style='color:#2e7d32'>20일선 " + won(m20[i]) + "</b>" + tr;
+      var lbl = kind === "my" ? b.time : kind === "wk" ? b.time + " 주" : b.time.slice(0, 7);
+      leg.innerHTML = "<b>" + lbl + "</b><b>시 " + won(b.open) + "</b><b>고 " + won(b.high) + "</b><b>저 " + won(b.low) + "</b><b>종 " + won(b.close) +
+        "</b><b class='" + cls(chg) + "'>" + pct(chg) + "</b><b style='color:#ef6c00'>10" + U + "선 " + won(m10[i]) + "</b><b style='color:#2e7d32'>20" + U + "선 " + won(m20[i]) + "</b>" + tr;
     }
     legend(bars.length - 1);
     chart.subscribeCrosshairMove(function (p) {
@@ -712,11 +743,12 @@
       return "<tr>" + td(t.date) + td(t.side, t.side === "매수" ? "up" : "down") + td(won(t.qty)) + td(won(t.amt / t.qty)) + td(won(t.amt)) +
         td(t.pnl === null ? "-" : won(t.pnl), t.pnl === null ? "" : cls(t.pnl)) + "</tr>";
     });
-    var out = trades.filter(function (t) { return t.date < first || t.date > last; }).length;
+    var out = trades.filter(function (t) { return barOfKey[bucketOf(t.date, kind)] === undefined; }).length;
     document.getElementById("hcTrades").innerHTML = trades.length ?
       table(["매매일", "구분", "수량", "평균단가", "금액", "실현손익"], rows) +
-      "<div class='ht-note'>▲ 매수 · ▼ 매도 (계좌: " + esc(account()) + ") · 주황선 10일선 · 초록선 20일선 · 수정주가 기준" +
-      (out ? " · 차트 기간 밖 매매 " + out + "건은 표에만 표시" : "") + " · 일봉 기준: " + esc((CHARTS && CHARTS.generated_at) || "") + "<br>" +
+      "<div class='ht-note'>▲ 매수 · ▼ 매도 (계좌: " + esc(account()) + (kind === "my" ? "" : ", 같은 " + (kind === "wk" ? "주" : "달") + " 매매는 합쳐서 표시") +
+      ") · 주황선 10" + U + "선 · 초록선 20" + U + "선 · 수정주가 기준" +
+      (out ? " · 차트 기간 밖 매매 " + out + "건은 표에만 표시" : "") + " · 자료 기준: " + esc((CHARTS && CHARTS.generated_at) || "") + "<br>" +
       "※ 확대·축소: 마우스 휠 / 두 손가락 벌리기·오므리기, 이동: 끌기, 처음 상태: 날짜 눈금 더블클릭</div>" :
       "<div class='ht-note'>선택한 계좌(" + esc(account()) + ")에는 이 종목 매매 기록이 없습니다. 기록 탭의 계좌 선택을 바꿔 보세요.</div>";
   }
