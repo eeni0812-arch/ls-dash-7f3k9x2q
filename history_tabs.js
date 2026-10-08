@@ -106,6 +106,7 @@
       ".ht-wrap table{box-shadow:none;margin:0;width:100%}",
       ".ht-wrap th,.ht-wrap td{white-space:nowrap}",
       ".ht-wrap tr.total td{background:#f5f6fb;font-weight:bold}",
+      ".ht-sort{cursor:pointer;user-select:none;white-space:nowrap}.ht-sort:hover{color:#3b4ab0}.ht-sort.on{color:#3b4ab0}.ht-sort .off{color:#ccc;font-size:10px}",
       ".ht-note{font-size:12px;color:#999;margin-top:8px;line-height:1.6}",
       ".ht-msg{padding:24px;text-align:center;color:#888;background:#fff;border-radius:8px}",
       ".ht-chart{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:8px 8px 4px;margin-bottom:12px}",
@@ -179,11 +180,11 @@
       }).join("") + "</span>";
     }
     var cur = account();
-    var opts = [ALL].concat(accNames()).map(function (n) {
+    var opts = accNames().concat([ALL]).map(function (n) {
       return "<option" + (n === cur ? " selected" : "") + ">" + esc(n) + "</option>";
     }).join("");
     return "<div class='ht-bar'>" +
-      "<select id='htAcct'>" + opts + "</select>" +
+      "<span>계좌</span><select id='htAcct'>" + opts + "</select>" +
       seg("unit", [["day", "일"], ["month", "월"]], S.unit) +
       "<span>매매일</span><input type='date' id='htFrom' value='" + S.from + "'> ~ <input type='date' id='htTo' value='" + S.to + "'>" +
       seg("preset", [["today", "오늘"], ["1w", "1주"], ["1m", "1개월"], ["3m", "3개월"], ["6m", "6개월"], ["1y", "1년"]], S.preset) +
@@ -191,8 +192,20 @@
   }
 
   function bindBar(box) {
+    box.querySelectorAll("[data-sort]").forEach(function (el) {
+      el.onclick = function () {
+        var v = el.getAttribute("data-sort"), i = v.indexOf(":"), tab = v.slice(0, i), key = v.slice(i + 1), st = sortState(tab);
+        // 처음 누르면 ▼(큰 값·최근 먼저), 다시 누르면 ▲, 종목명은 ▲(가나다)부터
+        var dir = st.k === key ? (st.dir === "asc" ? "desc" : "asc") : (key === "name" ? "asc" : "desc");
+        save("sort_" + tab, key + ":" + dir); render();
+      };
+    });
     var as = box.querySelector("#htAcct");
-    if (as) as.onchange = function () { S.acct = as.value; save("acct", S.acct); render(); };
+    if (as) as.onchange = function () {
+      S.acct = as.value; save("acct", S.acct);
+      if (window.switchAccount) window.switchAccount(S.acct);      // 보유현황 탭도 같은 계좌로
+      render();
+    };
     box.querySelectorAll("[data-unit]").forEach(function (b) {
       b.onclick = function () { S.unit = b.getAttribute("data-unit"); save("unit", S.unit); render(); };
     });
@@ -215,6 +228,28 @@
     return h + "</tbody></table></div>";
   }
   function td(v, c) { return "<td" + (c ? " class='" + c + "'" : "") + ">" + v + "</td>"; }
+  // ── 표 정렬: 제목을 누르면 ▲(오름차순) / ▼(내림차순) 전환, 탭별로 기억 ──
+  function sortState(tab) {
+    var v = load("sort_" + tab, ""), i = v.indexOf(":");
+    return i > 0 ? { k: v.slice(0, i), dir: v.slice(i + 1) } : { k: "", dir: "" };
+  }
+  function sh(tab, label, key) {
+    var st = sortState(tab), on = st.k === key;
+    return "<span class='ht-sort" + (on ? " on" : "") + "' data-sort='" + tab + ":" + key + "'>" + label + " " +
+      (on ? (st.dir === "asc" ? "▲" : "▼") : "<span class='off'>▲▼</span>") + "</span>";
+  }
+  function sortRecs(tab, list, getters) {
+    var st = sortState(tab), g = getters[st.k];
+    if (!g) return list;
+    var m = st.dir === "asc" ? 1 : -1;
+    return list.slice().sort(function (a, b) {
+      var x = g(a), y = g(b);
+      if (x === null || x === undefined || (typeof x === "number" && isNaN(x))) return 1;      // 값 없는 줄은 항상 아래
+      if (y === null || y === undefined || (typeof y === "number" && isNaN(y))) return -1;
+      if (typeof x === "string") return x.localeCompare(y, "ko") * m;
+      return (x - y) * m;
+    });
+  }
   function tdl(v) { return "<td class='name' style='text-align:left'>" + esc(v) + "</td>"; }
   function tdc(code) { return "<td class='name' style='text-align:left' data-code='" + esc(code) + "'>" + esc(nameOf(code)) + "</td>"; }
   function sumBoxes(items) {
@@ -234,16 +269,23 @@
       else { r.sq += t.qty; r.sa += t.amt; T.sq += t.qty; T.sa += t.amt; }
       r.fee += t.fee; r.tax += t.tax; T.fee += t.fee; T.tax += t.tax;
     });
-    var rows = Object.keys(g).map(function (k) { return g[k]; }).sort(function (x, y) {
+    var recs = Object.keys(g).map(function (k) { return g[k]; }).sort(function (x, y) {
       return x.p < y.p ? 1 : x.p > y.p ? -1 : nameOf(x.code).localeCompare(nameOf(y.code), "ko");
-    }).map(function (r) {
+    });
+    recs = sortRecs("journal", recs, {
+      date: function (r) { return r.p; }, name: function (r) { return nameOf(r.code); },
+      bavg: function (r) { return r.bq ? r.ba / r.bq : null; }, bamt: function (r) { return r.bq ? r.ba : null; },
+      savg: function (r) { return r.sq ? r.sa / r.sq : null; }, samt: function (r) { return r.sq ? r.sa : null; }
+    });
+    var rows = recs.map(function (r) {
       return "<tr>" + td(r.p) + tdc(r.code) +
         td(r.bq ? won(r.bq) : "-") + td(r.bq ? won(r.ba / r.bq) : "-") + td(r.bq ? won(r.ba) : "-") +
         td(r.sq ? won(r.sq) : "-") + td(r.sq ? won(r.sa / r.sq) : "-") + td(r.sq ? won(r.sa) : "-") +
         td(won(r.fee)) + td(won(r.tax)) + "</tr>";
     });
     return sumBoxes([["매수금액", won(T.ba)], ["매도금액", won(T.sa)], ["수수료", won(T.fee)], ["제세금", won(T.tax)]]) +
-      table([S.unit === "month" ? "월" : "매매일", "종목명", "매수수량", "매수평균가", "매수금액", "매도수량", "매도평균가", "매도금액", "수수료", "제세금"], rows,
+      table([sh("journal", S.unit === "month" ? "월" : "매매일", "date"), sh("journal", "종목명", "name"), "매수수량", sh("journal", "매수평균가", "bavg"),
+        sh("journal", "매수금액", "bamt"), "매도수량", sh("journal", "매도평균가", "savg"), sh("journal", "매도금액", "samt"), "수수료", "제세금"], rows,
         [td("합계"), td(""), td(won(T.bq)), td(""), td(won(T.ba)), td(won(T.sq)), td(""), td(won(T.sa)), td(won(T.fee)), td(won(T.tax))]);
   }
 
@@ -259,9 +301,15 @@
       r.kq += s.qty; r.ba += s.buy_amt; r.bf += s.buy_fee; r.pnl += s.pnl;
       T.pnl += s.pnl; T.cost += s.buy_amt; T.sa += s.amt;
     });
-    var rows = Object.keys(g).map(function (k) { return g[k]; }).sort(function (x, y) {
+    var recs = Object.keys(g).map(function (k) { return g[k]; }).sort(function (x, y) {
       return x.p < y.p ? 1 : x.p > y.p ? -1 : nameOf(x.code).localeCompare(nameOf(y.code), "ko");
-    }).map(function (r) {
+    });
+    recs = sortRecs("realized", recs, {
+      date: function (r) { return r.p; }, name: function (r) { return nameOf(r.code); },
+      pnl: function (r) { return r.kq > 0 ? r.pnl : null; }, rate: function (r) { return r.kq > 0 && r.ba ? r.pnl / r.ba * 100 : null; },
+      sprice: function (r) { return r.q ? r.sa / r.q : null; }, samt: function (r) { return r.sa; }
+    });
+    var rows = recs.map(function (r) {
       var known = r.kq > 0, rate = known && r.ba ? r.pnl / r.ba * 100 : null;
       var pnlTxt = known ? won(r.pnl) + (r.unk ? " *" : "") : "확인불가";
       return "<tr>" + td(r.p) + tdc(r.code) + td(pnlTxt, known ? cls(r.pnl) : "") + td(pct(rate), cls(rate)) +
@@ -270,7 +318,8 @@
     });
     var rate = T.cost ? T.pnl / T.cost * 100 : null;
     return sumBoxes([["추정실현손익", won(T.pnl), cls(T.pnl)], ["수익률", pct(rate), cls(rate)], ["매도금액", won(T.sa)], ["확인불가", T.unk + "건"]]) +
-      table([S.unit === "month" ? "월" : "매매일", "종목명", "추정실현손익", "수익률", "매도수량", "매도단가", "매도금액", "수수료", "제세금", "매입단가", "매수금액", "매수수수료"], rows) +
+      table([sh("realized", S.unit === "month" ? "월" : "매매일", "date"), sh("realized", "종목명", "name"), sh("realized", "추정실현손익", "pnl"),
+        sh("realized", "수익률", "rate"), "매도수량", sh("realized", "매도단가", "sprice"), sh("realized", "매도금액", "samt"), "수수료", "제세금", "매입단가", "매수금액", "매수수수료"], rows) +
       "<div class='ht-note'>※ HTS [6303]과 같은 계산: 추정실현손익 = 매도금액 − 매도수수료·제세금 − 매수금액 − 매수수수료(매수금액×0.015%), 수익률 = 손익 ÷ 매수금액.<br>" +
       "※ 매입단가는 체결 시각 순서대로 이동평균법으로 다시 계산한 값입니다 (시각을 못 받은 날은 추정 순서).<br>" +
       "※ 확인불가: 1년 전에 매수했거나 공모주 배정·입고처럼 매매일지에 매수 기록이 없는 경우. * 표시는 일부 체결만 계산된 경우입니다.</div>";
@@ -444,12 +493,12 @@
   //   5분봉 = minutes.json(LS 5분봉) + 실제 체결 시각 ▲▼
   //   당일 흐름 = 네이버 이미지 (LS 자료가 없을 때도 네이버 이미지로 대신 표시)
   var LWC_URL = "https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js";
-  var CHARTS = null, MINUTES = null, LOADQ = {}, LWC_LOADING = null;
+  var MINUTES = null, LOADQ = {}, LWC_LOADING = null;
   var CV = { code: "", name: "", view: "my", chart: null, n: 0 };
   var VIEWS = [["my", "일봉"], ["wk", "주봉"], ["mo", "월봉"], ["min", "5분봉"], ["area", "당일 흐름"]];
   // 봉 종류별 설정: 자료 키, 이동평균 이름, 기간 버튼, 대신 보여줄 네이버 이미지
   var KIND = {
-    my: { key: null, unit: "일", ranges: [["1개월", 21], ["3개월", 63], ["6개월", 126], ["1년", 250], ["전체", 0]], naver: "day", name: "일봉" },
+    my: { key: "d", unit: "일", ranges: [["1개월", 21], ["3개월", 63], ["6개월", 126], ["1년", 250], ["전체", 0]], naver: "day", name: "일봉" },
     wk: { key: "w", unit: "주", ranges: [["6개월", 26], ["1년", 52], ["2년", 104], ["3년", 156], ["전체", 0]], naver: "week", name: "주봉" },
     mo: { key: "m", unit: "개월", ranges: [["1년", 12], ["3년", 36], ["5년", 60], ["10년", 120], ["전체", 0]], naver: "month", name: "월봉" }
   };
@@ -471,7 +520,20 @@
       if (!r.ok) throw new Error(r.status); return r.json();
     }).then(done).catch(viaScript);
   }
-  function loadCharts(cb) { loadData("charts.json", "charts_data.js", "CHART_DATA", function (j) { CHARTS = j; cb(j); }); }
+  // 종목별 차트 파일 charts/종목코드.js (일봉 3년·주봉 10년·월봉 상장 이후) — 누른 종목만 받음
+  var CHART_ONE = {}, CHART_WAIT = {};
+  window.__chartLoaded = function (code, data) {
+    CHART_ONE[code] = data;
+    var l = CHART_WAIT[code] || []; delete CHART_WAIT[code];
+    l.forEach(function (f) { f(data); });
+  };
+  function loadChartOne(code, cb) {
+    if (CHART_ONE.hasOwnProperty(code)) return cb(CHART_ONE[code]);
+    if (CHART_WAIT[code]) { CHART_WAIT[code].push(cb); return; }
+    CHART_WAIT[code] = [cb];
+    function miss() { if (CHART_WAIT[code]) window.__chartLoaded(code, null); }
+    loadScript("charts/" + encodeURIComponent(code) + ".js?t=" + Math.floor(Date.now() / 600000), function () { setTimeout(miss, 0); }, miss);
+  }
   function loadMinutes(cb) { loadData("minutes.json", "minutes_data.js", "MINUTE_DATA", function (j) { MINUTES = j; cb(j); }); }
   function loadHistory(cb) {
     if (DATA) return cb();
@@ -502,6 +564,10 @@
       ".hc-range .sp{flex:1}",
       ".hc-mk{margin-left:8px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;user-select:none}.hc-mk input{vertical-align:-2px;margin-right:3px}",
       ".hc-chart{width:100%;height:440px;position:relative}",
+      ".hc-tip{position:absolute;z-index:5;display:none;pointer-events:none;background:rgba(255,255,255,.96);border:1px solid #c5cae9;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.18);padding:6px 9px;font-size:12px;line-height:1.5;min-width:150px}",
+      ".hc-tip .t{font-weight:bold;margin-bottom:2px}.hc-tip table{border-collapse:collapse;width:100%;box-shadow:none;margin:0;background:none}",
+      ".hc-tip td{padding:0 0 0 0;border:none;text-align:right;white-space:nowrap;font-size:12px;background:none}.hc-tip td:first-child{text-align:left;color:#777;padding-right:12px}",
+      ".hc-tip .tr{margin-top:3px;padding-top:3px;border-top:1px dashed #ddd;white-space:nowrap}",
       ".hc-legend{font-size:12px;color:#555;margin:4px 0;min-height:18px}",
       ".hc-legend b{font-weight:normal;padding:0 6px 0 0;white-space:nowrap;display:inline-block}",
       ".hc-img{width:100%;max-width:700px;display:block;margin:0 auto}",
@@ -587,12 +653,13 @@
     var body = document.getElementById("hcBody");
     if (v === "area") { naverImg(body, v); return; }
     body.innerHTML = "<div class='ht-msg'>차트 불러오는 중…</div>";
-    var code = CV.code, loader = v === "min" ? loadMinutes : loadCharts;
+    var code = CV.code, loader = v === "min" ? loadMinutes : function (cb) { loadChartOne(code, cb); };
     loadHistory(function () { loader(function (C) { loadLwc(function (ok) {
       if (CV.code !== code || CV.view !== v) return;
       if (!ok) { naverImg(body, KIND[v] ? KIND[v].naver : "area", "차트 프로그램을 불러오지 못해 네이버 이미지로 대신 보여드립니다."); return; }
       if (KIND[v]) {
-        var K = KIND[v], ch = C && C.codes ? C.codes[code] : null, ser = ch ? (K.key ? ch[K.key] : ch) : null;
+        var K = KIND[v], ser = C ? C[K.key] : null;
+        CV.asof = C ? C.f : "";
         if (!ser || !ser.d || !ser.d.length) {
           naverImg(body, K.naver, "이 종목의 " + K.name + " 자료가 아직 없습니다 (저녁 기록 갱신 때 추가됩니다). 네이버 " + K.name + " 이미지로 대신 보여드립니다 (확대 불가).");
           return;
@@ -647,6 +714,24 @@
       };
     });
   }
+  // 마우스를 올린(손가락으로 누른) 봉 옆에 뜨는 정보 상자
+  function tipBox(el) {
+    var t = document.createElement("div"); t.className = "hc-tip"; el.appendChild(t);
+    return {
+      show: function (p, html) {
+        if (!p || !p.point || p.point.x < 0 || p.point.y < 0) { t.style.display = "none"; return; }
+        t.innerHTML = html; t.style.display = "block";
+        var w = t.offsetWidth, h = t.offsetHeight, W = el.clientWidth, H = el.clientHeight;
+        var x = p.point.x + 16, y = p.point.y + 16;
+        if (x + w > W - 60) x = p.point.x - w - 16;
+        if (y + h > H - 30) y = Math.max(4, p.point.y - h - 16);
+        t.style.left = Math.max(4, x) + "px"; t.style.top = y + "px";
+      },
+      hide: function () { t.style.display = "none"; }
+    };
+  }
+  function tipRow(k, v, c) { return "<tr><td>" + k + "</td><td class='" + (c || "") + "'>" + v + "</td></tr>"; }
+
   // 매매 표시 켜기/끄기 (기억함)
   function bindMarks(body, series, markers) {
     var cb = body.querySelector("#hcMk");
@@ -734,10 +819,26 @@
         "</b><b class='" + cls(chg) + "'>" + pct(chg) + "</b><b style='color:#ef6c00'>10" + U + "선 " + won(m10[i]) + "</b><b style='color:#2e7d32'>20" + U + "선 " + won(m20[i]) + "</b>" + tr;
     }
     legend(bars.length - 1);
+    var tip = tipBox(el);
+    function tipHtml(i, lbl) {
+      var b = bars[i], prev = i > 0 ? bars[i - 1].close : null, chg = prev ? (b.close / prev - 1) * 100 : null;
+      var amp = b.low ? (b.high / b.low - 1) * 100 : null;
+      var tr = aggList.filter(function (r) { return r.i === i; }).map(function (r) {
+        return "<div class='tr' style='color:" + (r.side === "매수" ? "#d32f2f" : "#1565c0") + "'>" + (r.side === "매수" ? "▲ " : "▼ ") + r.side + " " + won(r.qty) + "주 @" + won(r.amt / r.qty) + "</div>";
+      }).join("");
+      return "<div class='t'>" + lbl + "</div><table>" + tipRow("시가", won(b.open)) + tipRow("고가", won(b.high), "up") + tipRow("저가", won(b.low), "down") +
+        tipRow("종가", won(b.close), cls(chg)) + tipRow("등락률", pct(chg), cls(chg)) + tipRow("고저 폭", amp === null ? "-" : amp.toFixed(2) + "%") +
+        tipRow("10" + U + "선", won(m10[i])) + tipRow("20" + U + "선", won(m20[i])) + "</table>" + tr;
+    }
     chart.subscribeCrosshairMove(function (p) {
-      if (!p || !p.time) { legend(bars.length - 1); return; }
+      if (!p || !p.time) { legend(bars.length - 1); tip.hide(); return; }
       var t = typeof p.time === "string" ? p.time : (p.time.year + "-" + ("0" + p.time.month).slice(-2) + "-" + ("0" + p.time.day).slice(-2));
-      if (byTime[t] !== undefined) legend(byTime[t]);
+      var i = byTime[t];
+      if (i === undefined) { tip.hide(); return; }
+      legend(i);
+      var b = bars[i], lbl = kind === "my" ? b.time + " (" + "일월화수목금토"[new Date(b.time + "T00:00:00Z").getUTCDay()] + ")" :
+        kind === "wk" ? b.time + " 주" : b.time.slice(0, 4) + "년 " + (+b.time.slice(5, 7)) + "월";
+      tip.show(p, tipHtml(i, lbl));
     });
     var rows = trades.slice().reverse().map(function (t) {
       return "<tr>" + td(t.date) + td(t.side, t.side === "매수" ? "up" : "down") + td(won(t.qty)) + td(won(t.amt / t.qty)) + td(won(t.amt)) +
@@ -748,7 +849,7 @@
       table(["매매일", "구분", "수량", "평균단가", "금액", "실현손익"], rows) +
       "<div class='ht-note'>▲ 매수 · ▼ 매도 (계좌: " + esc(account()) + (kind === "my" ? "" : ", 같은 " + (kind === "wk" ? "주" : "달") + " 매매는 합쳐서 표시") +
       ") · 주황선 10" + U + "선 · 초록선 20" + U + "선 · 수정주가 기준" +
-      (out ? " · 차트 기간 밖 매매 " + out + "건은 표에만 표시" : "") + " · 자료 기준: " + esc((CHARTS && CHARTS.generated_at) || "") + "<br>" +
+      (out ? " · 차트 기간 밖 매매 " + out + "건은 표에만 표시" : "") + " · 자료 기준일: " + esc(CV.asof || "") + "<br>" +
       "※ 확대·축소: 마우스 휠 / 두 손가락 벌리기·오므리기, 이동: 끌기, 처음 상태: 날짜 눈금 더블클릭</div>" :
       "<div class='ht-note'>선택한 계좌(" + esc(account()) + ")에는 이 종목 매매 기록이 없습니다. 기록 탭의 계좌 선택을 바꿔 보세요.</div>";
   }
@@ -808,9 +909,24 @@
         "<b style='color:#2e7d32'>20봉선 " + won(m20[i]) + "</b>" + tr;
     }
     legend(fe);
+    var tip = tipBox(el);
     chart.subscribeCrosshairMove(function (p) {
-      if (!p || p.time === undefined || p.time === null) { legend(fe); return; }
-      if (byTime[p.time] !== undefined) legend(byTime[p.time]);
+      if (!p || p.time === undefined || p.time === null) { legend(fe); tip.hide(); return; }
+      var i = byTime[p.time];
+      if (i === undefined) { tip.hide(); return; }
+      legend(i);
+      var b = bars[i], prev = i > 0 && bars[i - 1].day === b.day ? bars[i - 1].close : null;
+      var chg = prev ? (b.close / prev - 1) * 100 : null, open0 = mm[b.day].o[0], chg0 = open0 ? (b.close / open0 - 1) * 100 : null;
+      var end = utc(b.day, b.hhmm) + ((MINUTES && MINUTES.ncnt) || 5) * 60;
+      var tr = marks.filter(function (r) { return r.i === i; }).map(function (r) {
+        return r.list.map(function (e) {
+          return "<div class='tr' style='color:" + (e.side === "매수" ? "#d32f2f" : "#1565c0") + "'>" + (e.side === "매수" ? "▲ " : "▼ ") + e.side + " " +
+            e.time.slice(0, 2) + ":" + e.time.slice(2, 4) + ":" + e.time.slice(4, 6) + " " + won(e.qty) + "주 @" + won(e.price) + "</div>";
+        }).join("");
+      }).join("");
+      tip.show(p, "<div class='t'>" + b.day + " " + b.hhmm.slice(0, 2) + ":" + b.hhmm.slice(2) + "~" + hm(end) + "</div><table>" +
+        tipRow("시가", won(b.open)) + tipRow("고가", won(b.high), "up") + tipRow("저가", won(b.low), "down") + tipRow("종가", won(b.close), cls(chg)) +
+        tipRow("전봉 대비", pct(chg), cls(chg)) + tipRow("당일 시가 대비", pct(chg0), cls(chg0)) + tipRow("20봉선", won(m20[i])) + "</table>" + tr);
     });
     var rows = execs.slice().reverse().map(function (e) {
       return "<tr>" + td(e.date) + td(e.time.slice(0, 2) + ":" + e.time.slice(2, 4) + ":" + e.time.slice(4, 6)) + td(e.side, e.side === "매수" ? "up" : "down") +
@@ -856,6 +972,8 @@
     S.unit = load("unit", "day");
     S.preset = load("preset", "1m");
     S.acct = load("acct", ALL);
+    // 보유현황 계좌: 주소(#계좌명)가 없으면 기록 탭에서 마지막에 고른 계좌로 맞춤
+    if (!location.hash && window.switchAccount && S.acct) window.switchAccount(S.acct);
     var r = presetRange(S.preset || "1m"); S.from = r[0]; S.to = r[1];
     var tab = load("tab", "holdings");
     setTab(TABS.some(function (t) { return t.id === tab; }) ? tab : "holdings");
