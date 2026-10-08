@@ -912,9 +912,12 @@
     var trades = myTrades(code);
     body.innerHTML = rangeBar(K.ranges) +
       "<div class='hc-legend' id='hcLeg'></div><div class='hc-chart' id='hcChart'></div><div class='hc-trades' id='hcTrades'></div>";
-    var el = document.getElementById("hcChart"), chart = baseChart(el, false), candle = candles(chart);
+    var el = document.getElementById("hcChart"), chart = baseChart(el, false);
     var bars = ch.d.map(function (d, i) { return { time: dstr(d), open: ch.o[i], high: ch.h[i], low: ch.l[i], close: ch.c[i] }; });
-    candle.setData(bars);
+    // 시가·고가·저가가 없는 자료(종가만)는 캔들 대신 선으로
+    var flat = bars.length > 2 && bars.slice(0, -1).every(function (b) { return b.open === b.close && b.high === b.low; });
+    var candle = flat ? chart.addLineSeries({ color: "#3b4ab0", lineWidth: 2, priceLineVisible: true }) : candles(chart);
+    candle.setData(flat ? bars.map(function (b) { return { time: b.time, value: b.close }; }) : bars);
     var m10 = ma(ch.c, 10), m20 = ma(ch.c, 20);
     line(chart, "#ef6c00", 1).setData(bars.map(function (b, i) { return m10[i] === null ? { time: b.time } : { time: b.time, value: m10[i] }; }));
     line(chart, "#2e7d32", 2).setData(bars.map(function (b, i) { return m20[i] === null ? { time: b.time } : { time: b.time, value: m20[i] }; }));
