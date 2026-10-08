@@ -13,7 +13,7 @@
     { id: "stats", label: "매매 성적" }
   ];
   var DATA = null, LOADING = false, LOAD_ERR = "";
-  var S = { tab: "holdings", unit: "day", from: "", to: "", preset: "1m" };
+  var S = { tab: "holdings", unit: "day", from: "", to: "", preset: "1m", acct: "" };
 
   // ── 저장소 (실패해도 동작) ──
   function load(k, d) { try { var v = localStorage.getItem("ht_" + k); return v === null ? d : v; } catch (e) { return d; } }
@@ -26,17 +26,52 @@
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function iso(d) { var m = d.getMonth() + 1, x = d.getDate(); return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (x < 10 ? "0" : "") + x; }
   function keyOf(date) { return S.unit === "month" ? date.slice(0, 7) : date; }
-  function account() { var s = document.getElementById("accountSelect"); return s ? s.value : ""; }
-  // 저녁 기록(history.json)에 오늘 체결이 아직 없으면, 대시보드에 함께 들어 있는 오늘 체결(TODAY_TRADES)을 붙여서 보여줌
-  function acc() {
-    var a = DATA && DATA.accounts ? DATA.accounts[account()] : null;
-    var T = window.TODAY_TRADES, t = T && T.accounts ? T.accounts[account()] : null;
-    if (T && T.names && DATA) { DATA.names = DATA.names || {}; for (var c in T.names) if (!DATA.names[c]) DATA.names[c] = T.names[c]; }
+  var ALL = "전체(합산)";
+  function accNames() { return DATA && DATA.accounts ? Object.keys(DATA.accounts).sort() : []; }
+  // 기록 탭 계좌: 필터 막대에서 고른 값 (전체(합산) 포함). 위쪽 계좌 선택을 바꾸면 그 계좌로 따라감
+  function account() {
+    var names = accNames();
+    if (S.acct === ALL || names.indexOf(S.acct) >= 0) return S.acct;
+    var s = document.getElementById("accountSelect");
+    return s && names.indexOf(s.value) >= 0 ? s.value : ALL;
+  }
+  // 한 계좌 자료 + (저녁 기록에 오늘 체결이 아직 없으면) 대시보드에 들어 있는 오늘 체결(TODAY_TRADES)을 붙임
+  function oneAcc(name) {
+    var a = DATA && DATA.accounts ? DATA.accounts[name] : null;
+    var T = window.TODAY_TRADES, t = T && T.accounts ? T.accounts[name] : null;
     if (!t || !(t.trades || []).length) return a;
     var base = a || { trades: [], sells: [], daily: [] };
     var has = base.trades.some(function (x) { return x.date === T.date; });
     if (has) return base;
     return { trades: base.trades.concat(t.trades), sells: base.sells.concat(t.sells), daily: base.daily, cycles: base.cycles, today: true };
+  }
+  // 전체(합산): 매매·매도·사이클은 이어 붙이고, 일별 자산은 날짜별로 더한 뒤 수익률 다시 계산
+  function mergeAcc(list) {
+    var out = { trades: [], sells: [], cycles: [], daily: [] }, byDate = {};
+    list.forEach(function (a) {
+      out.trades = out.trades.concat(a.trades || []);
+      out.sells = out.sells.concat(a.sells || []);
+      out.cycles = out.cycles.concat(a.cycles || []);
+      if (a.today) out.today = true;
+      (a.daily || []).forEach(function (d) {
+        var r = byDate[d.date] || (byDate[d.date] = { date: d.date, begin: 0, end: 0, inflow: 0, outflow: 0, trade_amt: 0, pnl: 0, base: 0 });
+        ["begin", "end", "inflow", "outflow", "trade_amt", "pnl", "base"].forEach(function (f) { r[f] += d[f] || 0; });
+      });
+    });
+    out.daily = Object.keys(byDate).sort().map(function (k) {
+      var r = byDate[k]; r.rate = r.base > 0 ? r.pnl / r.base * 100 : 0; return r;
+    });
+    return out;
+  }
+  function acc() {
+    var T = window.TODAY_TRADES;
+    if (T && T.names && DATA) { DATA.names = DATA.names || {}; for (var c in T.names) if (!DATA.names[c]) DATA.names[c] = T.names[c]; }
+    var name = account();
+    if (name !== ALL) return oneAcc(name);
+    var names = accNames();
+    if (T && T.accounts) for (var k in T.accounts) if (names.indexOf(k) < 0) names.push(k);
+    var list = names.map(oneAcc).filter(function (a) { return a; });
+    return list.length ? mergeAcc(list) : null;
   }
   function nameOf(code) { return (DATA && DATA.names && DATA.names[code]) || code; }
   function inRange(date) { return (!S.from || date >= S.from) && (!S.to || date <= S.to); }
@@ -96,7 +131,7 @@
     box.id = "tab-history"; box.style.display = "none";
     holdings.parentNode.insertBefore(box, holdings.nextSibling);
     var sel = document.getElementById("accountSelect");
-    if (sel) sel.addEventListener("change", function () { if (S.tab !== "holdings") render(); });
+    if (sel) sel.addEventListener("change", function () { S.acct = sel.value; save("acct", S.acct); if (S.tab !== "holdings") render(); });
     return true;
   }
 
@@ -141,7 +176,12 @@
         return "<button data-" + name + "='" + it[0] + "' class='" + (it[0] === cur ? "on" : "") + "'>" + it[1] + "</button>";
       }).join("") + "</span>";
     }
+    var cur = account();
+    var opts = [ALL].concat(accNames()).map(function (n) {
+      return "<option" + (n === cur ? " selected" : "") + ">" + esc(n) + "</option>";
+    }).join("");
     return "<div class='ht-bar'>" +
+      "<select id='htAcct'>" + opts + "</select>" +
       seg("unit", [["day", "일"], ["month", "월"]], S.unit) +
       "<span>매매일</span><input type='date' id='htFrom' value='" + S.from + "'> ~ <input type='date' id='htTo' value='" + S.to + "'>" +
       seg("preset", [["today", "오늘"], ["1w", "1주"], ["1m", "1개월"], ["3m", "3개월"], ["6m", "6개월"], ["1y", "1년"]], S.preset) +
@@ -149,6 +189,8 @@
   }
 
   function bindBar(box) {
+    var as = box.querySelector("#htAcct");
+    if (as) as.onchange = function () { S.acct = as.value; save("acct", S.acct); render(); };
     box.querySelectorAll("[data-unit]").forEach(function (b) {
       b.onclick = function () { S.unit = b.getAttribute("data-unit"); save("unit", S.unit); render(); };
     });
@@ -417,6 +459,7 @@
     if (!buildShell()) return;
     S.unit = load("unit", "day");
     S.preset = load("preset", "1m");
+    S.acct = load("acct", ALL);
     var r = presetRange(S.preset || "1m"); S.from = r[0]; S.to = r[1];
     var tab = load("tab", "holdings");
     setTab(TABS.some(function (t) { return t.id === tab; }) ? tab : "holdings");
