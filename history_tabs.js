@@ -654,8 +654,30 @@
   function hm(t) { var x = new Date(t * 1000); return ("0" + x.getUTCHours()).slice(-2) + ":" + ("0" + x.getUTCMinutes()).slice(-2); }
   function md(t) { var x = new Date(t * 1000); return ("0" + (x.getUTCMonth() + 1)).slice(-2) + "-" + ("0" + x.getUTCDate()).slice(-2); }
 
+  // 코스피·코스닥 약식 캔들을 누르면 크게 보기 (자료: 대시보드에 들어 있는 window.MKT_CANDLES)
+  function openIndexChart(code, name, k) {
+    var m = (window.MKT_CANDLES || {})[code];
+    if (!m) return;
+    function conv(bars) {
+      var o = { d: [], o: [], h: [], l: [], c: [] };
+      (bars || []).forEach(function (b) { o.d.push(+b[0]); o.o.push(b[1]); o.h.push(b[2]); o.l.push(b[3]); o.c.push(b[4]); });
+      return o;
+    }
+    CHART_ONE["IDX" + code] = { f: iso(new Date()), d: conv(m.d), w: conv(m.w), m: conv(m.m) };
+    save("chartView", { d: "my", w: "wk", m: "mo" }[k] || "my");
+    openChart("IDX" + code, name || m.name);
+  }
+  document.addEventListener("click", function (e) {
+    var el = e.target && e.target.closest ? e.target.closest("[data-mkt]") : null;
+    if (el) openIndexChart(el.getAttribute("data-mkt"), el.getAttribute("data-mname"), el.getAttribute("data-mk"));
+  });
+
   function openChart(code, name) {
     CV.code = code; CV.name = name || nameOf(code);
+    var isIdx = String(code).indexOf("IDX") === 0;
+    var views = isIdx ? VIEWS.slice(0, 3) : VIEWS;          // 지수는 일·주·월봉만
+    var link = isIdx ? "https://finance.naver.com/sise/sise_index.naver?code=" + (code === "IDX301" ? "KOSDAQ" : "KOSPI")
+      : "https://finance.naver.com/item/main.naver?code=" + encodeURIComponent(code);
     var ov = document.getElementById("hcOv");
     if (!ov) {
       ov = document.createElement("div"); ov.id = "hcOv"; ov.className = "hc-ov";
@@ -663,17 +685,17 @@
       document.body.appendChild(ov);
     }
     ov.style.display = "flex";
-    ov.innerHTML = "<div class='hc-box'><div class='hc-head'><span class='hc-title'>" + esc(CV.name) + "</span><span class='hc-code'>" + esc(code) +
-      "</span><button class='hc-x' title='닫기'>×</button></div><div class='hc-views'>" + VIEWS.map(function (v) {
+    ov.innerHTML = "<div class='hc-box'><div class='hc-head'><span class='hc-title'>" + esc(CV.name) + "</span><span class='hc-code'>" + esc(isIdx ? "지수" : code) +
+      "</span><button class='hc-x' title='닫기'>×</button></div><div class='hc-views'>" + views.map(function (v) {
         return "<button data-hcv='" + v[0] + "'>" + v[1] + "</button>";
       }).join("") + "</div><div id='hcBody'></div>" +
-      "<div class='hc-foot'><a href='https://finance.naver.com/item/main.naver?code=" + encodeURIComponent(code) + "' target='_blank' rel='noopener'>네이버 증권에서 보기 ↗</a>" +
+      "<div class='hc-foot'><a href='" + link + "' target='_blank' rel='noopener'>네이버 증권에서 보기 ↗</a>" +
       "<span>차트: <a href='https://www.tradingview.com/' target='_blank' rel='noopener'>TradingView Lightweight Charts</a> · 당일 흐름·일/주/월봉 이미지: 네이버</span></div></div>";
     ov.querySelector(".hc-x").onclick = closeChart;
     ov.querySelectorAll("[data-hcv]").forEach(function (b) { b.onclick = function () { showView(b.getAttribute("data-hcv")); }; });
     var v = load("chartView", "my");
     v = { day: "my", week: "wk", month: "mo" }[v] || v;
-    showView(VIEWS.some(function (x) { return x[0] === v; }) ? v : "my");
+    showView(views.some(function (x) { return x[0] === v; }) ? v : "my");
   }
   function dropChart() { if (CV.chart) { try { CV.chart.remove(); } catch (e) {} CV.chart = null; } }
   function closeChart() {
@@ -961,6 +983,11 @@
         td(t.pnl === null ? "-" : won(t.pnl), t.pnl === null ? "" : cls(t.pnl)) + "</tr>";
     });
     var out = trades.filter(function (t) { return barOfKey[bucketOf(t.date, kind)] === undefined; }).length;
+    if (String(code).indexOf("IDX") === 0) {
+      document.getElementById("hcTrades").innerHTML = "<div class='ht-note'>※ 지수 " + (kind === "my" ? "일봉" : kind === "wk" ? "주봉" : "월봉") +
+        " · 주황선 10" + U + "선 · 초록선 20" + U + "선 · 30분마다 갱신(오늘 봉은 1분마다) · 확대·축소: 마우스 휠 / 두 손가락</div>";
+      return;
+    }
     document.getElementById("hcTrades").innerHTML = trades.length ?
       table(["매매일", "구분", "수량", "평균단가", "금액", "실현손익"], rows) +
       "<div class='ht-note'>▲ 매수 · ▼ 매도 (계좌: " + esc(account()) + (kind === "my" ? "" : ", 같은 " + (kind === "wk" ? "주" : "달") + " 매매는 합쳐서 표시") +
