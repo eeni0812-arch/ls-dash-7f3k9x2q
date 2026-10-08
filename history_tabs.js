@@ -211,12 +211,12 @@
       r.q += s.qty; r.sa += s.amt; r.fee += s.fee; r.tax += s.tax;
       if (s.pnl === null || s.pnl === undefined) { r.unk += 1; T.unk += 1; return; }
       r.kq += s.qty; r.ba += s.buy_amt; r.bf += s.buy_fee; r.pnl += s.pnl;
-      T.pnl += s.pnl; T.cost += s.buy_amt + s.buy_fee; T.sa += s.amt;
+      T.pnl += s.pnl; T.cost += s.buy_amt; T.sa += s.amt;
     });
     var rows = Object.keys(g).map(function (k) { return g[k]; }).sort(function (x, y) {
       return x.p < y.p ? 1 : x.p > y.p ? -1 : nameOf(x.code).localeCompare(nameOf(y.code), "ko");
     }).map(function (r) {
-      var known = r.kq > 0, cost = r.ba + r.bf, rate = known && cost ? r.pnl / cost * 100 : null;
+      var known = r.kq > 0, rate = known && r.ba ? r.pnl / r.ba * 100 : null;
       var pnlTxt = known ? won(r.pnl) + (r.unk ? " *" : "") : "확인불가";
       return "<tr>" + td(r.p) + tdl(nameOf(r.code)) + td(pnlTxt, known ? cls(r.pnl) : "") + td(pct(rate), cls(rate)) +
         td(won(r.q)) + td(won(r.sa / r.q)) + td(won(r.sa)) + td(won(r.fee)) + td(won(r.tax)) +
@@ -225,7 +225,8 @@
     var rate = T.cost ? T.pnl / T.cost * 100 : null;
     return sumBoxes([["추정실현손익", won(T.pnl), cls(T.pnl)], ["수익률", pct(rate), cls(rate)], ["매도금액", won(T.sa)], ["확인불가", T.unk + "건"]]) +
       table([S.unit === "month" ? "월" : "매매일", "종목명", "추정실현손익", "수익률", "매도수량", "매도단가", "매도금액", "수수료", "제세금", "매입단가", "매수금액", "매수수수료"], rows) +
-      "<div class='ht-note'>※ 추정실현손익 = 매도금액 − 매도수수료·제세금 − 매입단가×수량 − 매수수수료(보유수량 비례). 매입단가는 이동평균법으로 복원한 값입니다.<br>" +
+      "<div class='ht-note'>※ HTS [6303]과 같은 계산: 추정실현손익 = 매도금액 − 매도수수료·제세금 − 매수금액 − 매수수수료(매수금액×0.015%), 수익률 = 손익 ÷ 매수금액.<br>" +
+      "※ 매입단가는 체결 시각 순서대로 이동평균법으로 다시 계산한 값입니다 (시각을 못 받은 날은 추정 순서).<br>" +
       "※ 확인불가: 1년 전에 매수했거나 공모주 배정·입고처럼 매매일지에 매수 기록이 없는 경우. * 표시는 일부 체결만 계산된 경우입니다.</div>";
   }
 
@@ -238,7 +239,7 @@
       var r = g[k] || (g[k] = { p: k, n: 0, sa: 0, pnl: 0, cost: 0, unk: 0, win: 0, loss: 0 });
       r.n += 1; r.sa += s.amt;
       if (s.pnl === null || s.pnl === undefined) { r.unk += 1; return; }
-      r.pnl += s.pnl; r.cost += s.buy_amt + s.buy_fee;
+      r.pnl += s.pnl; r.cost += s.buy_amt;
       if (s.pnl > 0) r.win += 1; else if (s.pnl < 0) r.loss += 1;
     });
     var list = Object.keys(g).sort().map(function (k) { return g[k]; });
