@@ -77,7 +77,7 @@
   <div class="topbar">
     <div>
       <h1>LS증권 자동매매 대시보드</h1>
-      <span class="updated">마지막 갱신: 2026-10-08 10:17:10 (최대 3분 이내)</span>
+      <span class="updated">마지막 갱신: 2026-10-08 10:18:09 (최대 3분 이내)</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
       <select id="accountSelect" class="account-select" onchange="switchAccount(this.value)">
@@ -87,15 +87,16 @@
     </div>
   </div>
 
+  <div id="tab-holdings">
   <div class="account-section" id="acc-01계좌" style="display:block;">
   <h2 class="account-title">01계좌</h2>
   <div class="summary">
-    <div><div class="label">추정자산</div><div class="value">25,355,782</div></div>
+    <div><div class="label">추정자산</div><div class="value">25,307,885</div></div>
     <div><div class="label">실현손익</div><div class="value down">-156,451</div></div>
     <div><div class="label">매입금액</div><div class="value">20,065,008</div></div>
-    <div><div class="label">평가금액</div><div class="value">19,930,060</div></div>
-    <div><div class="label">평가손익</div><div class="value down">-134,948</div></div>
-    <div><div class="label">수익률</div><div class="value down">-0.67%</div></div>
+    <div><div class="label">평가금액</div><div class="value">19,882,163</div></div>
+    <div><div class="label">평가손익</div><div class="value down">-182,845</div></div>
+    <div><div class="label">수익률</div><div class="value down">-0.91%</div></div>
   </div>
 
   <table class="holdings-table">
@@ -122,12 +123,12 @@
             <td>48</td>
             <td>412,291</td>
             <td>413,242</td>
-            <td>410,500</td>
-            <td class='up'>+4.99%</td>
+            <td>409,500</td>
+            <td class='up'>+4.73%</td>
             <td>19,792,968</td>
-            <td>19,661,637</td>
-            <td class="down">-131,331</td>
-            <td class="down">-0.66%</td>
+            <td>19,613,740</td>
+            <td class="down">-179,228</td>
+            <td class="down">-0.91%</td>
             <td></td>
         </tr>
   </table>
@@ -151,13 +152,13 @@
         <div class="hcard">
           <div class="hcard-top">
             <span class="hcard-name">LG에너지솔루션</span>
-            <span class="hcard-price">410,500 <span class='up'>+4.99%</span></span>
+            <span class="hcard-price">409,500 <span class='up'>+4.73%</span></span>
           </div>
           <div class="hcard-grid">
-            <div><span class="k">수익률</span><span class="v down">-0.66%</span></div>
-            <div><span class="k">평가손익</span><span class="v down">-131,331</span></div>
+            <div><span class="k">수익률</span><span class="v down">-0.91%</span></div>
+            <div><span class="k">평가손익</span><span class="v down">-179,228</span></div>
             <div><span class="k">보유수량</span><span class="v">48</span></div>
-            <div><span class="k">평가금액</span><span class="v">19,661,637</span></div>
+            <div><span class="k">평가금액</span><span class="v">19,613,740</span></div>
             <div><span class="k">평균단가</span><span class="v">412,291</span></div>
             <div><span class="k">BEP단가</span><span class="v">413,242</span></div>
           </div>
@@ -378,5 +379,7 @@
   <div class='log'>[2026-10-07 15:15:25] [01계좌][알림전용모드] 씨엠티엑스(388210) 87주 매도 조건 충족 (실제 주문 생략) [10일선(89,360) 이탈]</div><div class='log'>[2026-10-07 15:15:24] [01계좌][알림전용모드] 샘씨엔에스(252990) 166주 매도 조건 충족 (실제 주문 생략) [10일선(19,107) 이탈]</div>
   <details class="syslog"><summary>시스템 오류 기록 50건 (클릭하여 펼치기)</summary><div class='log'>[2026-10-06 06:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-06 06:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-06 05:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-06 05:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-06 04:06:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:06:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:05:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:05:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:04:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:04:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:03:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:03:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:02:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-06 04:02:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: 데이터 조회에 실패 했습니다. | rsp_cd=IGW40013 | http=500</div><div class='log'>[2026-10-05 12:41:13] GitHub 업로드 중 오류: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)</div><div class='log'>[2026-10-05 06:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-05 06:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-05 05:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-05 05:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-04 06:49:13] GitHub 업로드 중 오류: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)</div><div class='log'>[2026-10-04 06:48:13] GitHub 업로드 중 오류: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)</div><div class='log'>[2026-10-04 06:46:13] GitHub 업로드 실패: 503 {"message": "No server is currently available to service your request. Sorry about that. Please try resubmitting your request and contact us if the problem persists."}
 </div><div class='log'>[2026-10-04 06:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-04 06:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-04 05:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-04 05:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-04 01:50:13] [04계좌] 당일매매내역 조회 실패: LSApiError: t0150: network error: HTTPSConnectionPool(host='openapi.ls-sec.co.kr', port=8080): Read timed out. (read timeout=10.0)</div><div class='log'>[2026-10-03 23:47:08] [04계좌] 잔고 조회 실패: LSApiError: t0424: 서비스 시간이 아니거나 사용자가 많아 서비스가 지연되고 있습니다. | rsp_cd=09000 | http=200</div><div class='log'>[2026-10-03 23:47:08] [01계좌] 당일매매내역 조회 실패: LSApiError: t0150: System 에러 입니다. 잠시후 다시 시도해 주세요 | rsp_cd=09000 | http=200</div><div class='log'>[2026-10-03 06:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-03 06:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-03 05:10:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-03 05:10:02] [01계좌] 잔고 조회 실패: LSApiError: t0424: GW라우팅 중 오류가 발생했습니다. | rsp_cd=IGW50008 | http=500</div><div class='log'>[2026-10-02 23:55:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:54:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:53:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:52:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:51:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:50:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:49:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:48:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:47:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:46:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:45:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:44:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:43:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:42:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:41:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:40:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div><div class='log'>[2026-10-02 23:39:02] [04계좌] 잔고 조회 실패: LSApiError: t0424: 유효하지 않은 token 입니다. | rsp_cd=IGW00121 | http=500</div></details>
+  </div>
+  <script src="history_tabs.js?v=20261008"></script>
 </body>
 </html>
