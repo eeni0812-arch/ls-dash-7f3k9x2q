@@ -9,7 +9,8 @@
     { id: "realized", label: "매도실현손익" },
     { id: "daily", label: "일자별 실현손익" },
     { id: "asset", label: "예탁자산 증감" },
-    { id: "return", label: "수익률 추이" }
+    { id: "return", label: "수익률 추이" },
+    { id: "stats", label: "매매 성적" }
   ];
   var DATA = null, LOADING = false, LOAD_ERR = "";
   var S = { tab: "holdings", unit: "day", from: "", to: "", preset: "1m" };
@@ -35,7 +36,7 @@
     var base = a || { trades: [], sells: [], daily: [] };
     var has = base.trades.some(function (x) { return x.date === T.date; });
     if (has) return base;
-    return { trades: base.trades.concat(t.trades), sells: base.sells.concat(t.sells), daily: base.daily, today: true };
+    return { trades: base.trades.concat(t.trades), sells: base.sells.concat(t.sells), daily: base.daily, cycles: base.cycles, today: true };
   }
   function nameOf(code) { return (DATA && DATA.names && DATA.names[code]) || code; }
   function inRange(date) { return (!S.from || date >= S.from) && (!S.to || date <= S.to); }
@@ -321,6 +322,49 @@
       "※ ※ 표시: 잔고가 매우 적던 기간이라 수익률이 크게 튀는 값입니다. 최고·최저 계산에서는 제외했습니다.</div>";
   }
 
+  // ── 6) 매매 성적: 거래 사이클(사서 전량 팔 때까지) 기준 승률·손익비·켈리 ──
+  var ETF_WORDS = ["KODEX", "TIGER", "KBSTAR", "ACE ", "SOL ", "RISE ", "PLUS ", "HANARO", "ARIRANG", "KOSEF", "TIMEFOLIO"];
+  function isEtf(code) { var n = nameOf(code); return ETF_WORDS.some(function (w) { return n.indexOf(w.trim()) === 0; }); }
+  function statsOf(list) {
+    var n = list.length, w = list.filter(function (c) { return c.pnl > 0; }), l = list.filter(function (c) { return c.pnl <= 0; });
+    function avg(a) { return a.length ? a.reduce(function (s, c) { return s + c.rate; }, 0) / a.length : 0; }
+    var W = n ? w.length / n : 0, aw = avg(w), al = Math.abs(avg(l)), R = al ? aw / al : null;
+    var K = R ? W - (1 - W) / R : null;
+    return { n: n, W: W, aw: aw, al: al, R: R, K: K, E: W * aw - (1 - W) * al,
+      pnl: list.reduce(function (s, c) { return s + c.pnl; }, 0),
+      days: n ? list.reduce(function (s, c) { return s + c.days; }, 0) / n : 0 };
+  }
+  function statRow(label, st) {
+    return "<tr>" + tdl(label) + td(st.n) + td(st.n ? (st.W * 100).toFixed(1) + "%" : "-") +
+      td(st.n ? "+" + st.aw.toFixed(2) + "%" : "-", "up") + td(st.n ? "-" + st.al.toFixed(2) + "%" : "-", "down") +
+      td(st.R === null ? "-" : st.R.toFixed(2)) + td(st.K === null ? "-" : pct(st.K * 100, 1), cls(st.K)) +
+      td(st.n ? pct(st.E, 2) : "-", cls(st.E)) + td(won(st.pnl), cls(st.pnl)) + td(st.n ? st.days.toFixed(1) + "일" : "-") + "</tr>";
+  }
+  function viewStats(a) {
+    var cs = (a.cycles || []).filter(function (c) { return inRange(c.end); });
+    if (!cs.length) return "<div class='ht-msg'>해당 기간에 완료된 거래(사서 전량 판 거래)가 없습니다.<br><small>매매 성적은 매일 저녁 기록 갱신 때 계산됩니다.</small></div>";
+    var all = statsOf(cs);
+    var head = ["구분", "거래수", "승률", "평균 이익", "평균 손실", "손익비", "켈리", "기대값/거래", "실현손익", "평균 보유"];
+    var buckets = [["당일 (0일)", 0, 0], ["1~5일", 1, 5], ["6~20일", 6, 20], ["21일 이상", 21, 99999]];
+    var byHold = buckets.map(function (b) { return statRow(b[0], statsOf(cs.filter(function (c) { return c.days >= b[1] && c.days <= b[2]; }))); });
+    var byType = [statRow("ETF", statsOf(cs.filter(function (c) { return isEtf(c.code); }))),
+                  statRow("개별주식", statsOf(cs.filter(function (c) { return !isEtf(c.code); })))];
+    var months = {};
+    cs.forEach(function (c) { (months[c.end.slice(0, 7)] = months[c.end.slice(0, 7)] || []).push(c); });
+    var byMonth = Object.keys(months).sort().reverse().map(function (m) { return statRow(m, statsOf(months[m])); });
+    var be = all.W > 0 ? (1 - all.W) / all.W : null;
+    return sumBoxes([["거래 수 (사이클)", all.n + "건"], ["승률", (all.W * 100).toFixed(1) + "%"],
+      ["손익비", all.R === null ? "-" : all.R.toFixed(2)], ["켈리 비율", all.K === null ? "-" : pct(all.K * 100, 1), cls(all.K)],
+      ["기대값/거래", pct(all.E, 2), cls(all.E)], ["실현손익", won(all.pnl), cls(all.pnl)]]) +
+      "<h3>보유 기간별</h3>" + table(head, byHold) +
+      "<h3>종목 유형별</h3>" + table(head, byType) +
+      "<h3>월별 (매도 완료 월 기준)</h3>" + table(head, byMonth) +
+      "<div class='ht-note'>※ 거래 1건 = 한 종목을 사기 시작해서 전량 팔 때까지(분할 매도는 1건으로 묶음). 수익률 = 실현손익 ÷ 매수금액.<br>" +
+      "※ 켈리 = 승률 − (1 − 승률) ÷ 손익비. 마이너스면 같은 금액으로 계속하면 손해가 나는 구조입니다." +
+      (be ? " 현재 승률에서 켈리가 0이 되려면 손익비 " + be.toFixed(2) + " 이상이 필요합니다." : "") +
+      "<br>※ 아직 보유 중인 종목, 원가를 알 수 없는 거래(1년 이전 매수 등)는 제외. 오늘 거래는 저녁 기록 갱신 후 반영됩니다.</div>";
+  }
+
   // ── 간단한 SVG 차트 ──
   function barChart(pts) {
     if (pts.length < 2) return "";
@@ -361,6 +405,7 @@
     else if (S.tab === "realized") body = viewRealized(a);
     else if (S.tab === "daily") body = viewDaily(a);
     else if (S.tab === "asset") body = viewAsset(a);
+    else if (S.tab === "stats") body = viewStats(a);
     else body = viewReturn(a);
     box.innerHTML = filterBar() + body +
       "<div class='ht-note'>기록 기준: " + esc(DATA.generated_at || "") + " (매일 저녁 갱신, 보관 기간 " + esc(DATA.start || "") + " ~ " + esc(DATA.end || "") + ")</div>";
