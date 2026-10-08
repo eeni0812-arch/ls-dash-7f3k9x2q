@@ -494,6 +494,7 @@
       ".hc-range button{border:1px solid #ccc;background:#fafafa;color:#333;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;min-width:34px}",
       ".hc-range button:hover{background:#e8eaf6}",
       ".hc-range .sp{flex:1}",
+      ".hc-mk{margin-left:8px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;user-select:none}.hc-mk input{vertical-align:-2px;margin-right:3px}",
       ".hc-chart{width:100%;height:440px;position:relative}",
       ".hc-legend{font-size:12px;color:#555;margin:4px 0;min-height:18px}",
       ".hc-legend b{font-weight:normal;padding:0 6px 0 0;white-space:nowrap;display:inline-block}",
@@ -612,6 +613,7 @@
   // 기간 버튼: items = [[이름, 봉 개수(0=전체)], ...]
   function rangeBar(items) {
     return "<div class='hc-range'>" + items.map(function (it) { return "<button data-rg='" + it[1] + "'>" + it[0] + "</button>"; }).join("") +
+      "<label class='hc-mk'><input type='checkbox' id='hcMk'" + (load("chartMarks", "1") === "1" ? " checked" : "") + "> 매매 표시</label>" +
       "<span class='sp'></span><button data-zoom='in' title='확대'>＋</button><button data-zoom='out' title='축소'>－</button></div>";
   }
   function bindRange(body, chart, n, dayStarts) {
@@ -633,6 +635,13 @@
         ts.setVisibleLogicalRange({ from: c - half, to: c + half });
       };
     });
+  }
+  // 매매 표시 켜기/끄기 (기억함)
+  function bindMarks(body, series, markers) {
+    var cb = body.querySelector("#hcMk");
+    function apply() { series.setMarkers(cb && cb.checked ? markers : []); }
+    if (cb) cb.onchange = function () { save("chartMarks", cb.checked ? "1" : "0"); apply(); };
+    apply();
   }
   function baseChart(el, intraday) {
     var LW = window.LightweightCharts;
@@ -678,7 +687,7 @@
         color: buy ? "#d32f2f" : "#1565c0", text: (buy ? "매수 " : "매도 ") + won(t.qty) });
     });
     markers.sort(function (a, b) { return a.time < b.time ? -1 : a.time > b.time ? 1 : 0; });
-    candle.setMarkers(markers);
+    bindMarks(body, candle, markers);
     var idx = Math.max(0, bars.length - 120);
     if (markers.length) { for (var i = 0; i < bars.length; i++) if (bars[i].time >= markers[0].time) { idx = i; break; } }
     chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, idx - 30), to: bars.length + 2 });
@@ -743,7 +752,7 @@
       r.qty += e.qty; r.amt += e.qty * e.price; r.list.push(e);
     });
     var marks = Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return a.i - b.i; });
-    candle.setMarkers(marks.map(function (r) {
+    bindMarks(body, candle, marks.map(function (r) {
       var buy = r.side === "매수";
       return { time: bars[r.i].time, position: buy ? "belowBar" : "aboveBar", shape: buy ? "arrowUp" : "arrowDown",
         color: buy ? "#d32f2f" : "#1565c0", text: (buy ? "매수 " : "매도 ") + won(r.qty) };
