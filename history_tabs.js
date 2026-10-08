@@ -594,6 +594,7 @@
       ".hc-range button{border:1px solid #ccc;background:#fafafa;color:#333;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;min-width:34px}",
       ".hc-range button:hover{background:#e8eaf6}",
       ".hc-range .sp{flex:1}",
+      ".hc-range input[type=date]{padding:4px 6px;border:1px solid #ccc;border-radius:6px;font-size:12px}",
       ".hc-mk{margin-left:8px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;user-select:none}.hc-mk input{vertical-align:-2px;margin-right:3px}",
       ".hc-chart{width:100%;height:440px;position:relative}",
       ".hc-tip{position:absolute;z-index:5;display:none;pointer-events:none;background:rgba(255,255,255,.96);border:1px solid #c5cae9;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.18);padding:6px 9px;font-size:12px;line-height:1.5;min-width:150px}",
@@ -731,24 +732,57 @@
           "<a href='https://finance.naver.com/item/frgn.naver?code=" + encodeURIComponent(code) + "' target='_blank' rel='noopener'>네이버 증권 외국인·기관 매매 보기 ↗</a></div>";
         return;
       }
-      var cols = d.cols, rows = d.rows;                     // [일자, 종가, 대비, 등락률, 거래량, 개인, 외국인, 기관계, ...]
-      function sum(n, idx) { return rows.slice(0, n).reduce(function (s, r) { return s + r[idx]; }, 0); }
-      function eok(v) { return "<span class='" + cls(v) + "'>" + (v > 0 ? "+" : "") + won(v) + "</span>"; }
-      var boxes = [5, 20].map(function (n) {
-        return "<div><div class='k'>최근 " + n + "일 누적 (백만원)</div><div class='v' style='font-size:13px'>개인 " + eok(sum(n, 5)) +
-          " · 외국인 " + eok(sum(n, 6)) + " · 기관 " + eok(sum(n, 7)) + "</div></div>";
-      }).join("");
-      var head = ["일자", "종가", "대비", "거래량"].concat(cols);
-      var trs = rows.map(function (r) {
-        var d8 = String(r[0]);
-        return "<tr>" + td(d8.slice(0, 4) + "/" + d8.slice(4, 6) + "/" + d8.slice(6)) + td(won(r[1]), cls(r[2])) +
-          td((r[2] > 0 ? "▲ " : r[2] < 0 ? "▼ " : "") + won(Math.abs(r[2])), cls(r[2])) + td(won(r[4])) +
-          r.slice(5).map(function (v) { return td(v ? won(v) : "", cls(v)); }).join("") + "</tr>";
-      });
-      body.innerHTML = "<div class='ht-sum' style='grid-template-columns:repeat(auto-fit,minmax(260px,1fr))'>" + boxes + "</div>" +
-        table(head, trs) +
-        "<div class='ht-note'>※ HTS [1702] 종목별 투자자 매매추이와 같은 구성 · 금액 기준 순매수(백만원) · 최근 " + rows.length +
-        "거래일 · 자료 기준일 " + esc(d.f || "") + " (매일 저녁 갱신)<br>※ 외국인 = 등록 외국인, 기타 = 기타법인 + 국가.</div>";
+      drawInvestor(body, d);
+    });
+  }
+  // 기간: 버튼(최근 N거래일) 또는 날짜 직접 입력 — 마지막 선택 기억
+  function drawInvestor(body, d) {
+    var cols = d.cols, all = d.rows;                     // [일자, 종가, 대비, 등락률, 거래량, 개인, 외국인, 기관계, ...] 최신순
+    function iso8(x) { x = String(x); return x.slice(0, 4) + "-" + x.slice(4, 6) + "-" + x.slice(6); }
+    var newest = iso8(all[0][0]), oldest = iso8(all[all.length - 1][0]);
+    var n = +load("invN", "20"), from = load("invFrom", ""), to = load("invTo", "");
+    var rows;
+    if (n > 0) rows = all.slice(0, n);
+    else rows = all.filter(function (r) { var t = iso8(r[0]); return (!from || t >= from) && (!to || t <= to); });
+    var showFrom = rows.length ? iso8(rows[rows.length - 1][0]) : (from || oldest), showTo = rows.length ? iso8(rows[0][0]) : (to || newest);
+    function eok(v) { return "<span class='" + cls(v) + "'>" + (v > 0 ? "+" : "") + won(v) + "</span>"; }
+    var tot = cols.map(function (_, j) { return rows.reduce(function (s, r) { return s + r[5 + j]; }, 0); });
+    var first = rows.length ? rows[rows.length - 1] : null, last = rows.length ? rows[0] : null;
+    var pchg = first && last && (first[1] - first[2]) ? (last[1] / (first[1] - first[2]) - 1) * 100 : null;   // 기간 주가 등락률
+    var btns = [[5, "5일"], [10, "10일"], [20, "20일"], [60, "3개월"], [120, "6개월"], [250, "1년"]].map(function (b) {
+      return "<button data-invn='" + b[0] + "' class='" + (n === b[0] ? "on" : "") + "'>" + b[1] + "</button>";
+    }).join("");
+    var head = ["일자", "종가", "대비", "거래량"].concat(cols);
+    var trs = rows.map(function (r) {
+      var d8 = String(r[0]);
+      return "<tr>" + td(d8.slice(0, 4) + "/" + d8.slice(4, 6) + "/" + d8.slice(6)) + td(won(r[1]), cls(r[2])) +
+        td((r[2] > 0 ? "▲ " : r[2] < 0 ? "▼ " : "") + won(Math.abs(r[2])), cls(r[2])) + td(won(r[4])) +
+        r.slice(5).map(function (v) { return td(v ? won(v) : "", cls(v)); }).join("") + "</tr>";
+    });
+    var total = [td("기간 합계"), td(pchg === null ? "" : pct(pchg), cls(pchg)), td(""), td(won(rows.reduce(function (s, r) { return s + r[4]; }, 0)))]
+      .concat(tot.map(function (v) { return td(won(v), cls(v)); }));
+    body.innerHTML =
+      "<div class='hc-range'><span class='ht-seg'>" + btns + "</span>" +
+      "<input type='date' id='invFrom' value='" + showFrom + "' min='" + oldest + "' max='" + newest + "'> ~ " +
+      "<input type='date' id='invTo' value='" + showTo + "' min='" + oldest + "' max='" + newest + "'></div>" +
+      "<div class='ht-sum' style='grid-template-columns:repeat(auto-fit,minmax(150px,1fr))'>" +
+      "<div><div class='k'>기간</div><div class='v' style='font-size:13px'>" + showFrom + " ~ " + showTo + " (" + rows.length + "일)</div></div>" +
+      "<div><div class='k'>개인 누적 (백만원)</div><div class='v'>" + eok(tot[0]) + "</div></div>" +
+      "<div><div class='k'>외국인 누적</div><div class='v'>" + eok(tot[1]) + "</div></div>" +
+      "<div><div class='k'>기관계 누적</div><div class='v'>" + eok(tot[2]) + "</div></div>" +
+      "<div><div class='k'>기간 주가 등락률</div><div class='v " + cls(pchg) + "'>" + pct(pchg) + "</div></div></div>" +
+      table(head, trs, total) +
+      "<div class='ht-note'>※ HTS [1702] 종목별 투자자 매매추이와 같은 구성 · 금액 기준 순매수(백만원) · 보관 기간 " + oldest + " ~ " + newest +
+      " · 자료 기준일 " + esc(d.f || "") + " (매일 저녁 갱신)<br>※ 외국인 = 등록 외국인, 기타 = 기타법인 + 국가. 맨 위 '기간 합계' 줄이 선택 기간의 누적 순매수입니다.</div>";
+    body.querySelectorAll("[data-invn]").forEach(function (b) {
+      b.onclick = function () { save("invN", b.getAttribute("data-invn")); drawInvestor(body, d); };
+    });
+    ["invFrom", "invTo"].forEach(function (id) {
+      var el = body.querySelector("#" + id);
+      el.onchange = function () {
+        save("invN", "0"); save("invFrom", body.querySelector("#invFrom").value); save("invTo", body.querySelector("#invTo").value);
+        drawInvestor(body, d);
+      };
     });
   }
 
