@@ -107,6 +107,9 @@
       ".ht-tabs{display:flex;gap:4px;overflow-x:auto;margin:0 0 14px;border-bottom:2px solid #3b4ab0;-webkit-overflow-scrolling:touch}",
       ".ht-tab{flex:0 0 auto;padding:9px 14px;border:none;background:#e8eaf6;color:#3b4ab0;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;white-space:nowrap}",
       ".ht-tab.on{background:#3b4ab0;color:#fff;font-weight:bold}",
+      ".disc-strip{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 12px;margin:0 0 12px;font-size:13px}",
+      ".disc-strip .muted{color:#999;font-size:11px}.disc-strip a{margin-left:auto;color:#3b4ab0;font-weight:bold;text-decoration:none}",
+      ".disc-h{margin-top:4px}.disc-h small{font-weight:normal;color:#888;font-size:12px}.disc-hr{border:none;border-top:2px dashed #ddd;margin:22px 0}",
       ".ht-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;padding:10px 12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:12px;font-size:13px}",
       ".ht-bar input[type=date],.ht-bar select{padding:5px 6px;border:1px solid #ccc;border-radius:6px;font-size:13px}",
       ".ht-seg{display:inline-flex;border:1px solid #3b4ab0;border-radius:6px;overflow:hidden}",
@@ -466,9 +469,87 @@
       td(st.R === null ? "-" : st.R.toFixed(2)) + td(st.K === null ? "-" : pct(st.K * 100, 1), cls(st.K)) +
       td(st.n ? pct(st.E, 2) : "-", cls(st.E)) + td(won(st.pnl), cls(st.pnl)) + td(st.n ? st.days.toFixed(1) + "일" : "-") + "</tr>";
   }
+  // ── 규율 점검 (discipline.py가 매일 저녁 만드는 discipline.json) ──
+  var DISC = null, DISC_TRIED = false;
+  function loadDisc(cb) {
+    loadData("discipline.json", "discipline_data.js", "DISCIPLINE_DATA", function (j) { DISC = j; DISC_TRIED = true; cb(j); });
+  }
+  function man(v) { return v === null || v === undefined ? "-" : (v > 0 ? "+" : "") + Math.round(v / 10000).toLocaleString("ko-KR") + "만 원"; }
+  function f1(v) { return v === null || v === undefined ? "-" : v.toFixed(0) + "%"; }
+  function rng(lo, hi) { return lo === null || lo === undefined ? "-" : pct(lo) + " ~ " + pct(hi); }
+  // 보유현황 탭 위쪽 한 줄 요약 (매일 상기용)
+  function renderDiscStrip() {
+    var host = document.querySelector("#tab-holdings .mkt-note"), old = document.getElementById("discStrip");
+    if (old) old.parentNode.removeChild(old);
+    if (!host || !DISC || !DISC.week) return;
+    var w = DISC.week, h = DISC.hold || [], f = (DISC.filter || [])[0], sl = DISC.sells || {};
+    var short = (h[0] ? h[0].pnl : 0) + (h[1] ? h[1].pnl : 0);
+    var el = document.createElement("div");
+    el.id = "discStrip"; el.className = "disc-strip";
+    el.innerHTML = "<b>규율 점검</b><span class='muted'>" + esc((DISC.history_at || "").slice(5, 16)) + " 기록 기준</span>" +
+      "<span>이번 주 당일매매 <b class='" + cls(w.pnl) + "'>" + w.n + "건 " + man(w.pnl) + "</b></span>" +
+      "<span>1년 당일·1일 매매 <b class='" + cls(short) + "'>" + man(short) + "</b> · 6일 이상 보유 <b class='" + cls(h[3] && h[3].pnl) + "'>" + man(h[3] && h[3].pnl) + "</b></span>" +
+      (f ? "<span>코스피 20일선 아래 매수 <b class='" + cls(f.down.pnl) + "'>" + man(f.down.pnl) + "</b></span>" : "") +
+      "<span>규칙 밖 매도(3개월) <b>" + (sl.out_90 || 0) + "/" + (sl.n_90 || 0) + "건</b></span>" +
+      "<a href='#' id='discMore'>자세히 →</a>";
+    host.parentNode.insertBefore(el, host.nextSibling);
+    el.querySelector("#discMore").onclick = function (e) { e.preventDefault(); setTab("stats"); window.scrollTo(0, 0); };
+  }
+  function discSection() {
+    if (!DISC) {
+      if (!DISC_TRIED) loadDisc(function () { if (S.tab === "stats") render(); });
+      return DISC_TRIED ? "<div class='ht-msg'>규율 점검 자료(discipline.json)가 아직 없습니다. <small>매일 저녁 기록 갱신 때 만들어집니다.</small></div>"
+        : "<div class='ht-msg'>규율 점검 불러오는 중…</div>";
+    }
+    var D = DISC, w = D.week, h = D.hold || [], F = D.filter || [], SL = D.sells || {};
+    var short = (h[0] ? h[0].pnl : 0) + (h[1] ? h[1].pnl : 0);
+    var html = "<h3 class='disc-h'>규율 점검 <small>전체 계좌 · " + esc(D.start || "") + " ~ " + esc(D.end || "") + " · " + esc(D.history_at || "") + " 기록 기준 (매일 저녁 갱신)</small></h3>" +
+      sumBoxes([["이번 주 당일매매", w.n + "건 · " + won(w.pnl) + "원", cls(w.pnl)],
+        ["당일·1일 매매 (1년)", won(short) + "원", cls(short)],
+        ["6일 이상 보유 (1년)", won(h[3] && h[3].pnl) + "원", cls(h[3] && h[3].pnl)],
+        ["코스피 20일선 아래 매수 (1년)", F[0] ? won(F[0].down.pnl) + "원" : "-", F[0] ? cls(F[0].down.pnl) : ""],
+        ["규칙 밖 매도 (최근 3개월)", (SL.out_90 || 0) + " / " + (SL.n_90 || 0) + "건"],
+        ["규칙 밖 매도 (이번 주)", (SL.out_week || 0) + " / " + (SL.n_week || 0) + "건"]]);
+    // 1) 이번 주 당일매매
+    html += "<h3>① 이번 주 당일매매 <small>(" + esc(w.start) + " 주 · 산 날 전량 판 매매)</small></h3>" +
+      table(["날짜", "계좌", "종목", "수익률", "손익"], (w.list || []).map(function (x) {
+        return "<tr>" + td(esc(x.date)) + td(esc(x.acc)) + "<td class='name' data-code='" + esc(x.code) + "'>" + esc(x.name) + "</td>" +
+          td(pct(x.rate), cls(x.rate)) + td(won(x.pnl), cls(x.pnl)) + "</tr>";
+      }));
+    var wk = D.weeks || [];
+    html += "<h3>주별 당일매매 손익 <small>(최근 " + wk.length + "주)</small></h3>" + barChart(wk.map(function (x) { return [x.week + " 주", x.pnl]; })) +
+      table(["주 (월요일)", "건수", "이익 건", "손익"], wk.slice().reverse().map(function (x) {
+        return "<tr>" + td(esc(x.week)) + td(x.n) + td(x.win) + td(won(x.pnl), cls(x.pnl)) + "</tr>";
+      }));
+    html += "<h3>보유 기간별 성적 <small>(1년)</small></h3>" +
+      table(["보유 기간", "건수", "승률", "평균 수익률", "95% 구간", "손익 합계"], h.map(function (x) {
+        return "<tr>" + td(esc(x.label)) + td(x.n) + td(f1(x.win)) + td(pct(x.mean), cls(x.mean)) + td(rng(x.lo, x.hi)) + td(won(x.pnl), cls(x.pnl)) + "</tr>";
+      }));
+    // 2) 시장 필터
+    html += "<h3>② 매수일 지수 20일선 위/아래 <small>(매수 전날 종가 기준)</small></h3>" +
+      table(["기준", "구분", "건수", "승률", "평균 수익률", "손익 합계", "당일매매 비중", "위가 나을 확률"], [].concat.apply([], F.map(function (x) {
+        return [["위", x.up, x.up_same_ratio], ["아래", x.down, x.down_same_ratio]].map(function (r, i) {
+          var st = r[1];
+          return "<tr>" + (i ? "" : "<td rowspan='2'>" + esc(x.basis) + "</td>") + td(r[0] === "아래" ? "<b>20일선 아래</b>" : "20일선 위") + td(st.n) + td(f1(st.win)) +
+            td(pct(st.mean), cls(st.mean)) + td(won(st.pnl), cls(st.pnl)) + td(f1(r[2])) +
+            (i ? "" : "<td rowspan='2'>" + (x.p_up_better === null ? "-" : Math.round(x.p_up_better * 100) + "%") + "</td>") + "</tr>";
+        });
+      })));
+    // 3) 매도 분류
+    html += "<h3>③ 매도를 지금 규칙으로 분류 <small>(같은 날·같은 종목 매도는 1건)</small></h3>" +
+      table(["분류", "건수", "실현손익", "매도 수익률", "판 뒤 10거래일 주가", "95% 구간", "오를 확률", "판 뒤 20거래일", "그중 당일매매"], (SL.cats || []).map(function (x) {
+        return "<tr>" + td(esc(x.label)) + td(x.n) + td(won(x.pnl), cls(x.pnl)) + td(pct(x.rate), cls(x.rate)) + td(pct(x.f10), cls(x.f10)) +
+          td(rng(x.f10_lo, x.f10_hi)) + td(x.f10_p_up === null ? "-" : Math.round(x.f10_p_up * 100) + "%") + td(pct(x.f20), cls(x.f20)) + td(x.same) + "</tr>";
+      }));
+    html += "<div class='ht-note'>※ 거래 1건 = 처음 산 날부터 전량 판 날까지. 보유 중인 종목은 제외. 95% 구간·확률은 부트스트랩(2,000번 다시 뽑기) 추정치입니다.<br>" +
+      "※ ② 종목별 코스피/코스닥 소속은 구분하지 않고 세 기준으로 모두 계산했습니다. ③ 분류는 종가 기준 근사이며, 규칙이 생기기 전 매매도 지금 규칙에 비춰 분류했습니다.<br>" +
+      "※ '판 뒤 주가'가 마이너스면 그 매도가 더 큰 손실을 막은 것, 플러스면 일찍 판 것입니다.</div><hr class='disc-hr'>";
+    return html;
+  }
+
   function viewStats(a) {
     var cs = (a.cycles || []).filter(function (c) { return inRange(c.end); });
-    if (!cs.length) return "<div class='ht-msg'>해당 기간에 완료된 거래(사서 전량 판 거래)가 없습니다.<br><small>매매 성적은 매일 저녁 기록 갱신 때 계산됩니다.</small></div>";
+    if (!cs.length) return discSection() + "<div class='ht-msg'>해당 기간에 완료된 거래(사서 전량 판 거래)가 없습니다.<br><small>매매 성적은 매일 저녁 기록 갱신 때 계산됩니다.</small></div>";
     var all = statsOf(cs);
     var head = ["구분", "거래수", "승률", "평균 이익", "평균 손실", "손익비", "켈리", "기대값/거래", "실현손익", "평균 보유"];
     var buckets = [["당일 (0일)", 0, 0], ["1~5일", 1, 5], ["6~20일", 6, 20], ["21일 이상", 21, 99999]];
@@ -479,7 +560,7 @@
     cs.forEach(function (c) { (months[c.end.slice(0, 7)] = months[c.end.slice(0, 7)] || []).push(c); });
     var byMonth = Object.keys(months).sort().reverse().map(function (m) { return statRow(m, statsOf(months[m])); });
     var be = all.W > 0 ? (1 - all.W) / all.W : null;
-    return sumBoxes([["거래 수 (사이클)", all.n + "건"], ["승률", (all.W * 100).toFixed(1) + "%"],
+    return discSection() + "<h3>선택한 계좌·기간 성적</h3>" + sumBoxes([["거래 수 (사이클)", all.n + "건"], ["승률", (all.W * 100).toFixed(1) + "%"],
       ["손익비", all.R === null ? "-" : all.R.toFixed(2)], ["켈리 비율", all.K === null ? "-" : pct(all.K * 100, 1), cls(all.K)],
       ["기대값/거래", pct(all.E, 2), cls(all.E)], ["실현손익", won(all.pnl), cls(all.pnl)]]) +
       "<h3>보유 기간별</h3>" + table(head, byHold) +
@@ -663,9 +744,40 @@
       (bars || []).forEach(function (b) { o.d.push(+b[0]); o.o.push(b[1]); o.h.push(b[2]); o.l.push(b[3]); o.c.push(b[4]); });
       return o;
     }
-    CHART_ONE["IDX" + code] = { f: iso(new Date()), d: conv(m.d), w: conv(m.w), m: conv(m.m) };
-    save("chartView", { d: "my", w: "wk", m: "mo" }[k] || "my");
-    openChart("IDX" + code, name || m.name);
+    // 전체 기간 파일(charts/IDX001.js · 저녁 수집) + 대시보드에 든 최근 봉(오늘 실시간 포함)을 합침
+    function merge(full, recent) {
+      if (!full || !full.d || !full.d.length) return recent;
+      var map = {}, i, keys;
+      for (i = 0; i < full.d.length; i++) map[full.d[i]] = [full.o[i], full.h[i], full.l[i], full.c[i]];
+      for (i = 0; i < recent.d.length; i++) {
+        // 같은 주·같은 달 봉은 날짜 꼬리표가 다를 수 있음(파일 10/07, 실시간 10/08) → 직전 최근 봉 다음날~이번 봉 날짜 사이의 파일 봉을 지우고 최근 봉으로 대체
+        var old = map[recent.d[i]];
+        if (i > 0) Object.keys(map).forEach(function (d) {
+          d = +d; if (d > recent.d[i - 1] && d <= recent.d[i]) { if (!old) old = map[d]; delete map[d]; }
+        });
+        var r = [recent.o[i], recent.h[i], recent.l[i], recent.c[i]];
+        // 최근 봉이 종가만 있는(시가=고가=저가=종가) 경우엔 전체 파일의 시가·고가·저가를 살림
+        if (old && r[0] === r[3] && r[1] === r[3] && r[2] === r[3]) r = [old[0], Math.max(old[1], r[3]), Math.min(old[2], r[3]), r[3]];
+        map[recent.d[i]] = r;
+      }
+      keys = Object.keys(map).map(Number).sort(function (a, b) { return a - b; });
+      var o = { d: [], o: [], h: [], l: [], c: [] };
+      keys.forEach(function (d) { var v = map[d]; o.d.push(d); o.o.push(v[0]); o.h.push(v[1]); o.l.push(v[2]); o.c.push(v[3]); });
+      return o;
+    }
+    var key = "IDX" + code, recent = { d: conv(m.d), w: conv(m.w), m: conv(m.m) };
+    function go(full) {
+      CHART_ONE[key] = { f: iso(new Date()), full: !!(full && full.d && full.d.d && full.d.d.length),
+        d: merge(full && full.d, recent.d), w: merge(full && full.w, recent.w), m: merge(full && full.m, recent.m) };
+      save("chartView", { d: "my", w: "wk", m: "mo" }[k] || "my");
+      openChart(key, name || m.name);
+    }
+    if (CHART_ONE[key] && CHART_ONE[key].full) {      // 이미 전체 파일을 받아 둠 → 바로 열기
+      save("chartView", { d: "my", w: "wk", m: "mo" }[k] || "my");
+      return openChart(key, name || m.name);
+    }
+    delete CHART_ONE[key];
+    loadChartOne(key, function (full) { delete CHART_ONE[key]; go(full); });
   }
   document.addEventListener("click", function (e) {
     var el = e.target && e.target.closest ? e.target.closest("[data-mkt]") : null;
@@ -1140,7 +1252,8 @@
     // 시장 현황 칸 복사: 그래프 색 구분(clipPath) id가 겹치면 숨은 보유현황 쪽을 가리켜 색이 안 나오므로 id를 바꿔서 복사
     var ovb = document.querySelector("#tab-holdings .ov-bar");
     function cloneHtml(el) { return el ? el.outerHTML.replace(/(sp[ud]\d+)/g, "$1_scan") : ""; }
-    box.innerHTML = cloneHtml(ovb) + (mkt ? cloneHtml(mkt) + (mktNote ? mktNote.outerHTML : "") : "") +
+    var wrap = document.querySelector("#tab-holdings .mkt-wrap");    // PC 반반 배치(해외지수 | 코스피·코스닥) 묶음
+    box.innerHTML = (wrap ? cloneHtml(wrap) : cloneHtml(ovb) + (mkt ? cloneHtml(mkt) : "")) + (mkt && mktNote ? mktNote.outerHTML : "") +
       "<div class='ht-bar'><span>스캔일</span><select id='scanDate'>" + days.map(function (d) {
         return "<option value='" + d + "'" + (d === day ? " selected" : "") + ">" + d + " (" + (SCAN.scans[d].time || "") + ")</option>";
       }).join("") + "</select><small style='color:#888'>매일 15:10 스캔 · 최근 " + days.length + "거래일 보관</small></div>" +
@@ -1181,13 +1294,14 @@
     if (!buildShell()) return;
     S.unit = load("unit", "day");
     S.preset = load("preset", "1m");
-    S.acct = load("acct", ALL);
+    S.acct = ALL;                       // 처음 열 때는 항상 전체(합산)부터
     // 보유현황 계좌: 주소(#계좌명)가 없으면 기록 탭에서 마지막에 고른 계좌로 맞춤
     if (!location.hash && window.switchAccount && S.acct) window.switchAccount(S.acct);
     var r = presetRange(S.preset || "1m"); S.from = r[0]; S.to = r[1];
     var tab = load("tab", "holdings");
     tab = { journal: "trades", realized: "trades", asset: "assetret", "return": "assetret" }[tab] || tab;   // 예전 탭 이름
     setTab(TABS.some(function (t) { return t.id === tab; }) ? tab : "holdings");
+    loadDisc(renderDiscStrip);          // 보유현황 위쪽 '규율 점검' 한 줄 요약
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
