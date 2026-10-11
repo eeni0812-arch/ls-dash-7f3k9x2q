@@ -7,6 +7,7 @@
   var TABS = [
     { id: "holdings", label: "보유현황" },
     { id: "scan", label: "추세 스캔" },
+    { id: "paper", label: "모의 장부" },
     { id: "trades", label: "매매내역" },
     { id: "daily", label: "일자별 실현손익" },
     { id: "assetret", label: "자산·수익률" },
@@ -161,6 +162,7 @@
     document.getElementById("tab-holdings").style.display = id === "holdings" ? "" : "none";
     document.getElementById("tab-history").style.display = id === "holdings" ? "none" : "";
     if (id === "scan") renderScan();
+    else if (id === "paper") renderPaper();
     else if (id !== "holdings") { if (!DATA) fetchData(); else render(); }
   }
 
@@ -599,6 +601,35 @@
       "<path d='" + d + "' fill='none' stroke='" + color + "' stroke-width='2' vector-effect='non-scaling-stroke'/></svg>" +
       "<div style='display:flex;justify-content:space-between;font-size:11px;color:#999;padding:2px 4px'><span>" + pts[0][0] + "</span><span>" +
       (isPct ? pct(lastV) : won(lastV)) + "</span><span>" + pts[pts.length - 1][0] + "</span></div></div>";
+  }
+
+  // 여러 줄 비교 차트 (버전 1 실선 · 그림자 장부 점선, 같은 날짜끼리)
+  function lineChartN(series) {
+    var dates = {}, i;
+    series.forEach(function (s) { s.pts.forEach(function (r) { dates[r[0]] = 1; }); });
+    var ds = Object.keys(dates).sort();
+    if (ds.length < 2) return "";
+    var maps = series.map(function (s) { var m = {}; s.pts.forEach(function (r) { m[r[0]] = r[1]; }); return m; }), ys = [];
+    maps.forEach(function (m) { ds.forEach(function (d) { if (m[d] !== undefined) ys.push(m[d]); }); });
+    var W = 600, H = 180, P = 8, mn = Math.min.apply(null, ys), mx = Math.max.apply(null, ys);
+    if (mx === mn) { mx += 1; mn -= 1; }
+    function X(k) { return P + k * (W - P * 2) / (ds.length - 1); }
+    function Y(v) { return H - P - (v - mn) / (mx - mn) * (H - P * 2); }
+    function path(m) {
+      var out = [], first = true;
+      for (i = 0; i < ds.length; i++) { if (m[ds[i]] === undefined) continue; out.push((first ? "M" : "L") + X(i).toFixed(1) + " " + Y(m[ds[i]]).toFixed(1)); first = false; }
+      return out.join(" ");
+    }
+    var svg = series.map(function (s, k) {
+      return "<path d='" + path(maps[k]) + "' fill='none' stroke='" + s.color + "' stroke-width='2'" + (s.dash ? " stroke-dasharray='" + s.dash + "'" : "") + " vector-effect='non-scaling-stroke'/>";
+    }).join("");
+    var legend = series.map(function (s) {
+      var last = s.pts.length ? s.pts[s.pts.length - 1][1] : null;
+      return "<b style='color:" + s.color + "'>" + (s.dash ? "┅ " : "━ ") + esc(s.label) + " " + won(last) + "</b>";
+    }).join(" · ");
+    return "<div class='ht-chart'><svg viewBox='0 0 " + W + " " + H + "' preserveAspectRatio='none'>" + svg + "</svg>" +
+      "<div style='display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#999;padding:2px 4px;flex-wrap:wrap'><span>" + ymd(ds[0]) + "</span><span>" +
+      legend + "</span><span>" + ymd(ds[ds.length - 1]) + "</span></div></div>";
   }
 
   // ── 종목 차트 팝업: 종목명(data-code)을 누르면 열림 ──
@@ -1270,10 +1301,158 @@
     bindBar(box);
   }
 
+  // ── 모의 장부 (sys_trader.py: 15:12 예비 신호 · 15:40 마감 장부) ──
+  var PAPER = null;
+  function ymd(d) { return d ? d.slice(0, 4) + "-" + d.slice(4, 6) + "-" + d.slice(6, 8) : "-"; }
+  function md(d) { return d ? d.slice(4, 6) + "/" + d.slice(6, 8) : "-"; }
+  function renderPaper() {
+    var box = document.getElementById("tab-history");
+    if (!PAPER) {
+      box.innerHTML = "<div class='ht-msg'>모의 장부를 불러오는 중…</div>";
+      loadData("sys_paper.json", "sys_paper_data.js", "SYS_PAPER_DATA", function (j) {
+        PAPER = j || {};
+        if (S.tab === "paper") renderPaper();
+      });
+      return;
+    }
+    var P = PAPER;
+    if (!P.start) {
+      box.innerHTML = "<div class='ht-msg'>아직 모의 장부 자료가 없습니다.<br><small>sys_trader.py(매일 15:40)가 실행되면 여기에 표시됩니다.</small></div>";
+      return;
+    }
+    function nameCell(code, name) { return "<td class='name' style='text-align:left' data-code='" + esc(code) + "'>" + esc(name) + "</td>"; }
+    function small(t) { return "<div style='font-size:11px;color:#888;text-align:left;white-space:normal;max-width:520px'>" + esc(t || "") + "</div>"; }
+    var cl = P.closed || [], wins = cl.filter(function (t) { return t.ret > 0; });
+    var avg = cl.length ? cl.reduce(function (a, t) { return a + t.ret; }, 0) / cl.length : null;
+    var realized = (P.sells || []).reduce(function (a, f) { return a + (f.pnl || 0); }, 0);
+    var unreal = (P.holdings || []).reduce(function (a, h) { return a + (h.pnl || 0); }, 0);
+    var h = "<div class='ht-note' style='text-align:left'>" + esc(P.basis || "") + "</div>";
+    h += sumBoxes([
+      ["모의 자산", won(P.value) + "원", cls(P.cum)],
+      ["누적 수익률", pct(P.cum), cls(P.cum)],
+      ["최대 낙폭", pct(P.mdd), "down"],
+      ["보유", (P.holdings || []).length + " / " + (P.slots || 8) + "종목"],
+      ["실현손익", won(realized) + "원", cls(realized)],
+      ["평가손익", won(unreal) + "원", cls(unreal)],
+      ["끝난 매매", cl.length + "건" + (cl.length ? " · 승률 " + Math.round(wins.length / cl.length * 100) + "%" : "")],
+      ["1건 평균", avg === null ? "-" : pct(avg), cls(avg)]
+    ]);
+    var f = P.filters || {};
+    if (f.KOSPI !== undefined) {
+      h += "<div class='ht-note' style='text-align:left'>지수 필터(전날 종가 ≥ 20일선): 코스피 " + (f.KOSPI ? "통과" : "<b class='down'>미달</b>") +
+        " · 코스닥 " + (f.KOSDAQ ? "통과" : "<b class='down'>미달</b>") + " → 신고가 매수 " + (f.KOSPI && f.KOSDAQ ? "가능" : "<b>안 함</b>") +
+        (P.no_buy ? " · <b class='down'>행동규칙: 전날 자산 −2% 이상 하락 → 오늘 신규 매수 금지</b>" : "") +
+        (P.units_now ? "<br>유닛: 코스피 " + P.units_now.KOSPI + "유닛 · 코스닥 " + P.units_now.KOSDAQ + "유닛 기준 + 계좌 보너스 " +
+          (P.bonus ? "<b class='up'>켜짐(+1)</b>" : "꺼짐") + " (1유닛 = 전날 자산의 2.5%, 한 종목 최대 5유닛)" : "") + "</div>";
+    }
+    // 예비 신호
+    var pv = P.preview;
+    if (pv) {
+      var stale = P.day && pv.day < P.day;
+      var rows = (pv.list || []).map(function (x, i) {
+        return "<tr>" + td(i + 1) + nameCell(x.code, x.name) + td(pct(x.r20, 1), cls(x.r20)) + (P.sizing === "unit" ? td(x.units ? x.units + "유닛" : "-") : "") +
+          td(x.held ? "보유 중" : (x.close ? "종가 매수" : "상한가 → 내일 시가")) + "<td style='text-align:left'>" + small(x.reason) + "</td></tr>";
+      });
+      h += "<h3>예비 신호 <small style='color:#888;font-weight:normal'>" + esc(pv.at || "") + " 기준 · 빈 자리 " + pv.free + "개 · 위에서부터 먼저 삼(20일 수익률 낮은 순)" +
+        (stale ? " · <b class='down'>지난 예비 신호</b>" : "") + "</small></h3>" +
+        (rows.length ? table(["순서", "종목명", "20일 수익률"].concat(P.sizing === "unit" ? ["살 유닛"] : []).concat(["구분", "매수 이유"]), rows) : "<div class='ht-msg'>후보 없음</div>");
+    }
+    // 오늘 매매
+    if ((P.events || []).length) {
+      h += "<h3>최근 모의 매매 <small style='color:#888;font-weight:normal'>" + ymd(P.day) + " 마감 반영 · " + P.events.length + "건</small></h3>" +
+        "<div class='ht-note' style='text-align:left'>" + P.events.map(esc).join("<br>") + "</div>";
+    }
+    // 보유
+    var hr = (P.holdings || []).map(function (x) {
+      return "<tr>" + nameCell(x.code, x.name) + td(md(x.in)) + (P.sizing === "unit" ? td(x.units === null || x.units === undefined ? "-" : x.units + " / 5") : "") +
+        td(won(x.cost)) + td(won(x.price)) + td(pct(x.ret, 1), cls(x.ret)) +
+        td(won(x.pnl), cls(x.pnl)) + td(won(x.stop) + (x.be ? " (본전)" : " (−8%)"), "down") +
+        td(x.hit24 ? "절반 매도함" : won(x.t24)) + td(x.ma20 ? won(x.ma20) : "-") + "</tr>";
+    });
+    h += "<h3>보유 종목 <small style='color:#888;font-weight:normal'>" + ymd(P.day) + " 종가 기준 · 손절가 이하로 거래되면 전량 매도</small></h3>" +
+      table(["종목명", "매수일"].concat(P.sizing === "unit" ? ["유닛"] : []).concat(["1주 원가", "현재가", "수익률", "평가손익", "손절가", "+24% 매도가", "20일선"]), hr);
+    // 자산 곡선
+    var cv = P.curve || [];
+    if (cv.length >= 2) {
+      h += "<h3>자산 추이 <small style='color:#888;font-weight:normal'>시작 " + won(P.capital) + "원 · " + ymd(P.start) + "부터</small></h3>" +
+        lineChart(cv.map(function (r) { return [ymd(r[0]), r[1]]; }), false);
+    }
+    // 실현손익
+    var sr = (P.sells || []).slice().reverse().map(function (x) {
+      return "<tr>" + td(md(x.day)) + nameCell(x.code, x.name) + td(md(x.in)) + td(won(x.buy_px)) + td(won(x.px)) + td(won(x.qty)) +
+        td(won(x.pnl), cls(x.pnl)) + td(pct(x.ret, 1), cls(x.ret)) + td(esc(x.why)) + "</tr>";
+    });
+    h += "<h3>실현손익 (판 것) <small style='color:#888;font-weight:normal'>합계 " + won(realized) + "원</small></h3>" +
+      table(["매도일", "종목명", "매수일", "1주 원가", "매도가", "수량", "실현손익", "수익률", "사유"], sr);
+    // 끝난 매매
+    var cr = cl.slice().reverse().map(function (t) {
+      return "<tr>" + nameCell(t.code, t.name) + td(md(t.in)) + td(md(t.out)) + td(t.hold + "일") + td(pct(t.ret, 1), cls(t.ret)) +
+        td(won(t.pnl), cls(t.pnl)) + td(esc(t.why)) + "</tr>";
+    });
+    h += "<h3>끝난 매매 <small style='color:#888;font-weight:normal'>" + cl.length + "건</small></h3>" +
+      table(["종목명", "매수일", "매도일", "보유", "수익률", "손익", "청산 이유"], cr);
+    // 버전 2 후보 그림자 (지수 주봉)
+    var wa = (P.wk_alt || []).slice().reverse().map(function (a) {
+      function rr(px, d, why) { return d ? pct((px / a.avg - 1) * 100, 1) + " (" + md(d) + ") " + esc(why || "") : "보유 중"; }
+      return "<tr>" + nameCell(a.code, a.name) + td(md(a.in)) + td(md(a.sw)) + td(rr(a.real_px, a.real_out, a.real_why)) + td(rr(a.alt_px, a.alt_out, a.alt_why)) + "</tr>";
+    });
+    if (wa.length) h += "<h3>참고: 지수 주봉 그림자 <small style='color:#888;font-weight:normal'>+50% 넘은 종목을 '지수 주봉 2주 연속 음봉'으로 팔았다면 · 남은 수량 기준 · 비용 전</small></h3>" +
+      table(["종목명", "매수일", "주봉 전환일", "실제 (종목 주봉)", "지수 주봉이었다면"], wa);
+    // 버전 2 후보 그림자 장부들 (레짐 20일선 + 70일선 / + 80일선)
+    var SH = (P.shadows || (P.v2 ? [P.v2] : [])).filter(function (v) { return v && v.start; });
+    var SHC = ["#e65100", "#2e7d32", "#8e24aa"];
+    if (SH.length) {
+      h += "<h3 style='border-top:2px solid #e65100;padding-top:10px'>버전 2 후보 그림자 장부 <small style='color:#888;font-weight:normal'>" +
+        "레짐 필터만 다르고 나머지 규칙은 버전 1과 같음 · 같은 날 같은 1억으로 시작 · 실제 장부엔 영향 없음 · 분기 말에 비교해 버전 2를 고름</small></h3>";
+      var crow = [["버전 1 (지수 20일선)", P.value, P.cum, P.mdd, (P.holdings || []).length, cl, null]].concat(SH.map(function (V) {
+        return [V.regime, V.value, V.cum, V.mdd, (V.holdings || []).length, V.closed || [], V];
+      }));
+      h += table(["장부", "모의 자산", "누적 수익률", "버전 1 대비", "최대 낙폭", "보유", "끝난 매매", "승률", "1건 평균", "오늘 신규 매수"], crow.map(function (r) {
+        var c_ = r[5], w_ = c_.filter(function (t) { return t.ret > 0; }), a_ = c_.length ? c_.reduce(function (s_, t) { return s_ + t.ret; }, 0) / c_.length : null;
+        var ff = r[6] ? (r[6].filters || {}) : f, ok = ff.KOSPI !== undefined ? (ff.KOSPI && ff.KOSDAQ ? "가능" : "<b class='down'>안 함</b>") : "-";
+        var df = r[6] ? (r[1] || 0) - (P.value || 0) : null;
+        return "<tr>" + tdl(r[0]) + td(won(r[1]) + "원", cls(r[2])) + td(pct(r[2]), cls(r[2])) + td(df === null ? "-" : (df > 0 ? "+" : "") + won(df) + "원", cls(df)) +
+          td(pct(r[3]), "down") + td(r[4] + " / " + (P.slots || 8)) + td(c_.length + "건") + td(c_.length ? Math.round(w_.length / c_.length * 100) + "%" : "-") +
+          td(a_ === null ? "-" : pct(a_), cls(a_)) + td(ok) + "</tr>";
+      }));
+      var ser = [{ pts: (P.curve || []), label: "버전 1", color: "#3b4ab0" }].concat(SH.map(function (V, k) {
+        return { pts: V.curve || [], label: V.regime, color: SHC[k % SHC.length], dash: "6 4" };
+      }));
+      if (ser.some(function (s) { return s.pts.length >= 2; })) h += lineChartN(ser);
+      SH.forEach(function (V, k) {
+        var vcl = V.closed || [];
+        h += "<h3 style='color:" + SHC[k % SHC.length] + "'>그림자: " + esc(V.regime || "") + "</h3>";
+        if ((V.events || []).length) h += "<div class='ht-note' style='text-align:left'><b>최근 매매</b><br>" + V.events.map(esc).join("<br>") + "</div>";
+        var vhr = (V.holdings || []).map(function (x) {
+          return "<tr>" + nameCell(x.code, x.name) + td(md(x.in)) + td(won(x.cost)) + td(won(x.price)) + td(pct(x.ret, 1), cls(x.ret)) +
+            td(won(x.pnl), cls(x.pnl)) + td(won(x.stop) + (x.be ? " (본전)" : " (−8%)"), "down") + td(x.hit24 ? "절반 매도함" : won(x.t24)) +
+            td(x.wk ? "주봉 매도 모드" : (x.ma20 ? won(x.ma20) : "-")) + "</tr>";
+        });
+        h += table(["종목명", "매수일", "1주 원가", "현재가", "수익률", "평가손익", "손절가", "+24% 매도가", "20일선"], vhr);
+        var vcr = vcl.slice().reverse().map(function (t) {
+          return "<tr>" + nameCell(t.code, t.name) + td(md(t.in)) + td(md(t.out)) + td(t.hold + "일") + td(pct(t.ret, 1), cls(t.ret)) +
+            td(won(t.pnl), cls(t.pnl)) + td(esc(t.why)) + "</tr>";
+        });
+        if (vcr.length) h += "<div class='ht-note' style='text-align:left'><b>끝난 매매 " + vcl.length + "건</b></div>" +
+          table(["종목명", "매수일", "매도일", "보유", "수익률", "손익", "청산 이유"], vcr);
+      });
+    }
+    // 매수 이유
+    var br_ = (P.buys || []).slice().reverse().map(function (x) {
+      return "<tr>" + td(md(x.day)) + nameCell(x.code, x.name) + td(won(x.qty)) + td(won(x.px)) + "<td style='text-align:left'>" + small(x.reason || x.why) + "</td></tr>";
+    });
+    if (br_.length) h += "<h3>매수 이유</h3>" + table(["매수일", "종목명", "수량", "가격", "이유"], br_);
+    h += "<div class='ht-note'>※ 모의 장부입니다 (실제 주문 없음). 미끄러짐 " + (P.slip ? +(P.slip * 100).toFixed(2) : 0.2) + "%·수수료·거래세 반영, 백테스트와 같은 규칙.<br>" +
+      "※ 기준: " + esc(P.generated_at || "") + " (매일 15:12 예비 신호 · 15:40 마감 후 갱신). 종목명을 누르면 차트가 열립니다.</div>";
+    box.innerHTML = h;
+    bindBar(box);
+  }
+
   // ── 그리기 ──
   function render() {
     var box = document.getElementById("tab-history");
     if (S.tab === "scan") return renderScan();
+    if (S.tab === "paper") return renderPaper();
     if (!DATA) return;
     var a = acc();
     var body;
