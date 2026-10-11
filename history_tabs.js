@@ -1398,13 +1398,18 @@
     });
     if (wa.length) h += "<h3>참고: 지수 주봉 그림자 <small style='color:#888;font-weight:normal'>+50% 넘은 종목을 '지수 주봉 2주 연속 음봉'으로 팔았다면 · 남은 수량 기준 · 비용 전</small></h3>" +
       table(["종목명", "매수일", "주봉 전환일", "실제 (종목 주봉)", "지수 주봉이었다면"], wa);
-    // 버전 2 후보 그림자 장부들 (레짐 20일선 + 70일선 / + 80일선)
+    // 그림자 장부들 — 2026-10-12부터 새 조건식(동료 60일 주 후보 · 40일 그림자, shadow_new.py가 씀) / 그 전엔 버전 2 후보(레짐 20+70 · 20+80)
     var SH = (P.shadows || (P.v2 ? [P.v2] : [])).filter(function (v) { return v && v.start; });
     var SHC = ["#e65100", "#2e7d32", "#8e24aa"];
+    var NEWSH = P.shadow_title === "new";
     if (SH.length) {
-      h += "<h3 style='border-top:2px solid #e65100;padding-top:10px'>버전 2 후보 그림자 장부 <small style='color:#888;font-weight:normal'>" +
-        "레짐 필터만 다르고 나머지 규칙은 버전 1과 같음 · 같은 날 같은 1억으로 시작 · 실제 장부엔 영향 없음 · 분기 말에 비교해 버전 2를 고름</small></h3>";
-      var crow = [["버전 1 (지수 20일선)", P.value, P.cum, P.mdd, (P.holdings || []).length, cl, null]].concat(SH.map(function (V) {
+      h += NEWSH
+        ? "<h3 style='border-top:2px solid #e65100;padding-top:10px'>새 조건식 섀도 장부 <small style='color:#888;font-weight:normal'>" +
+          "레짐 80일선(코스피·코스닥 모두 80일선 위 + 80일선 상승) · 5년 신고가 · 주도주 30위 또는 상관관계 동료 IA(S1 스위치) · " +
+          "동료 60일 = 주 후보 · 40일 = 그림자 · 같은 날 같은 1억으로 시작 · 주문 없음 · 버전 1 장부엔 영향 없음</small></h3>"
+        : "<h3 style='border-top:2px solid #e65100;padding-top:10px'>버전 2 후보 그림자 장부 <small style='color:#888;font-weight:normal'>" +
+          "레짐 필터만 다르고 나머지 규칙은 버전 1과 같음 · 같은 날 같은 1억으로 시작 · 실제 장부엔 영향 없음 · 분기 말에 비교해 버전 2를 고름</small></h3>";
+      var crow = [[NEWSH ? "버전 1 (지금 모의 장부)" : "버전 1 (지수 20일선)", P.value, P.cum, P.mdd, (P.holdings || []).length, cl, null]].concat(SH.map(function (V) {
         return [V.regime, V.value, V.cum, V.mdd, (V.holdings || []).length, V.closed || [], V];
       }));
       h += table(["장부", "모의 자산", "누적 수익률", "버전 1 대비", "최대 낙폭", "보유", "끝난 매매", "승률", "1건 평균", "오늘 신규 매수"], crow.map(function (r) {
@@ -1421,7 +1426,9 @@
       if (ser.some(function (s) { return s.pts.length >= 2; })) h += lineChartN(ser);
       SH.forEach(function (V, k) {
         var vcl = V.closed || [];
-        h += "<h3 style='color:" + SHC[k % SHC.length] + "'>그림자: " + esc(V.regime || "") + "</h3>";
+        h += "<h3 style='color:" + SHC[k % SHC.length] + "'>" + (NEWSH ? "섀도: " : "그림자: ") + esc(V.regime || "") + "</h3>";
+        if (V.plan && V.plan.day && V.plan.day > (P.day || "")) h += "<div class='ht-note' style='text-align:left'><b>오늘 예정 (" + esc(V.plan.at || "") + " 미리보기 · 지금 가격 = 종가 가정)</b><br>" +
+          "매수: " + ((V.plan.buys || []).length ? V.plan.buys.map(esc).join(", ") : "없음") + "<br>매도: " + ((V.plan.sells || []).length ? V.plan.sells.map(esc).join(", ") : "없음") + "</div>";
         if ((V.events || []).length) h += "<div class='ht-note' style='text-align:left'><b>최근 매매</b><br>" + V.events.map(esc).join("<br>") + "</div>";
         var vhr = (V.holdings || []).map(function (x) {
           return "<tr>" + nameCell(x.code, x.name) + td(md(x.in)) + td(won(x.cost)) + td(won(x.price)) + td(pct(x.ret, 1), cls(x.ret)) +
