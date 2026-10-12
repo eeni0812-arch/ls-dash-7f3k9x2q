@@ -679,6 +679,33 @@
     loadScript("charts/" + encodeURIComponent(code) + ".js?t=" + Math.floor(Date.now() / 600000), function () { setTimeout(miss, 0); }, miss);
   }
   function loadMinutes(cb) { loadData("minutes.json", "minutes_data.js", "MINUTE_DATA", function (j) { MINUTES = j; cb(j); }); }
+  // 장중 실시간 분봉 (intraday_live.py가 1~2분마다 만듦) — 오늘 일봉·5분봉(보유 종목), 지수 1분봉 · 50초마다 새로 받음
+  var LIVE = null, LIVE_AT = 0;
+  function loadLive(cb) {
+    if (LIVE && Date.now() - LIVE_AT < 50000) return cb(LIVE);
+    function done(j) { if (j) LIVE = j; LIVE_AT = Date.now(); cb(LIVE); }
+    function viaScript() { loadScript("intraday_live_data.js?t=" + Date.now(), function () { done(window.INTRADAY_LIVE); }, function () { done(null); }); }
+    if (location.protocol === "file:" || !window.fetch) return viaScript();
+    fetch("intraday_live.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error(r.status); return r.json();
+    }).then(done).catch(viaScript);
+  }
+  function liveDayIso(L) { return L && L.day ? L.day.slice(0, 4) + "-" + L.day.slice(4, 6) + "-" + L.day.slice(6, 8) : ""; }
+  // 저녁 일봉 자료(C.d) 끝에 오늘 일봉을 붙이거나 바꿈 (주봉·월봉은 저녁 갱신 그대로)
+  function withLiveDay(C, L, code) {
+    var s = L && L.stocks && L.stocks[code];
+    if (!C || !C.d || !C.d.d || !s || !s.day) return C;
+    var ser = C.d, n = ser.d.length, day = +L.day, out = {}, k;
+    for (k in ser) out[k] = Array.isArray(ser[k]) ? ser[k].slice() : ser[k];
+    var vals = { o: s.day[0], h: s.day[1], l: s.day[2], c: s.day[3], v: s.day[4] };
+    var at = n && +ser.d[n - 1] === day ? n - 1 : (n && +ser.d[n - 1] < day ? n : -1);
+    if (at < 0) return C;
+    out.d[at] = day;
+    ["o", "h", "l", "c", "v"].forEach(function (q) { if (Array.isArray(out[q])) out[q][at] = vals[q]; });
+    for (k in out) if (Array.isArray(out[k]) && out[k].length < out.d.length) out[k].push(out[k][out[k].length - 1]);
+    var C2 = {}; for (k in C) C2[k] = C[k]; C2.d = out; C2.f = (C.f || "") + " · 오늘 " + (L.at || "") + " 실시간";
+    return C2;
+  }
   function loadHistory(cb) {
     if (DATA) return cb();
     loadData("history.json", "history_data.js", "HISTORY_DATA", function (j) { if (!DATA && j) DATA = j; cb(); });
@@ -818,7 +845,7 @@
   function openChart(code, name) {
     CV.code = code; CV.name = name || nameOf(code);
     var isIdx = String(code).indexOf("IDX") === 0;
-    var views = isIdx ? VIEWS.slice(0, 3) : VIEWS;          // 지수는 일·주·월봉만
+    var views = isIdx ? VIEWS.slice(0, 3).concat([["min", "분봉(1분)"]]) : VIEWS;   // 지수: 일·주·월봉 + 오늘 1분봉(장중 실시간)
     var link = isIdx ? "https://finance.naver.com/sise/sise_index.naver?code=" + (code === "IDX301" ? "KOSDAQ" : "KOSPI")
       : "https://finance.naver.com/item/main.naver?code=" + encodeURIComponent(code);
     var ov = document.getElementById("hcOv");
@@ -852,11 +879,13 @@
     if (v === "area") { naverImg(body, v); return; }
     if (v === "inv") { showInvestor(body, CV.code); return; }
     body.innerHTML = "<div class='ht-msg'>차트 불러오는 중…</div>";
-    var code = CV.code, loader = v === "min" ? loadMinutes : function (cb) { loadChartOne(code, cb); };
-    loadHistory(function () { loader(function (C) { loadLwc(function (ok) {
+    var code = CV.code, isIdx = String(code).indexOf("IDX") === 0;
+    var loader = v === "min" ? (isIdx ? function (cb) { cb(null); } : loadMinutes) : function (cb) { loadChartOne(code, cb); };
+    loadHistory(function () { loader(function (C) { loadLive(function (L) { loadLwc(function (ok) {
       if (CV.code !== code || CV.view !== v) return;
       if (!ok) { naverImg(body, KIND[v] ? KIND[v].naver : "area", "차트 프로그램을 불러오지 못해 네이버 이미지로 대신 보여드립니다."); return; }
       if (KIND[v]) {
+        if (!isIdx && v === "my") C = withLiveDay(C, L, code);        // 오늘 일봉 (장중 실시간)
         var K = KIND[v], ser = C ? C[K.key] : null;
         CV.asof = C ? C.f : "";
         if (!ser || !ser.d || !ser.d.length) {
@@ -865,14 +894,22 @@
         }
         drawMy(body, code, ser, v);
       } else {
-        var mm = C && C.codes ? C.codes[code] : null;
-        if (!mm || !Object.keys(mm).length) {
-          naverImg(body, "area", "5분봉은 최근 20영업일 안에 매매한 날과 보유종목 최근 5영업일만 보관합니다. 이 종목은 자료가 없어 네이버 당일 흐름으로 대신 보여드립니다.");
-          return;
+        var mm = null, today = liveDayIso(L);
+        if (isIdx) {                                                   // 지수: 오늘 1분봉 (30초 값으로 만든 근사 봉)
+          var ix = L && L.index && L.index[code.slice(3)];
+          if (ix && ix.m1 && ix.m1.t && ix.m1.t.length) { mm = {}; mm[today] = ix.m1; }
+          if (!mm) { body.innerHTML = "<div class='ht-msg'>오늘 지수 분봉 자료가 아직 없습니다.<br><small>장중(09:00~15:45)에 intraday_live.py 가 돌 때만 1분마다 만들어집니다.</small></div>"; return; }
+        } else {
+          var base = C && C.codes ? C.codes[code] : null, live = L && L.stocks && L.stocks[code];
+          if (base || live) { mm = {}; var k2; for (k2 in (base || {})) mm[k2] = base[k2]; if (live && live.m5 && live.m5.t.length && today) mm[today] = live.m5; }
+          if (!mm || !Object.keys(mm).length) {
+            naverImg(body, "area", "5분봉은 최근 20영업일 안에 매매한 날과 보유종목 최근 5영업일만 보관합니다(오늘 것은 장중 실시간). 이 종목은 자료가 없어 네이버 당일 흐름으로 대신 보여드립니다.");
+            return;
+          }
         }
         drawMin(body, code, mm);
       }
-    }); }); });
+    }); }); }); });
   }
   // ── 종목별 투자자 매매추이 ([1702], 금액·백만원) — investors/종목코드.js ──
   var INV_ONE = {}, INV_WAIT = {};
