@@ -1492,3 +1492,94 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
+
+// ───────────── 해외 시장 휴장 표시 (2026-10-12 추가) ─────────────
+// 니케이 225 · 대만 가권 · 미 10년물 카드에 '휴장 ○/○~○/○ · 이유 · ○/○ 재개' 또는 '개장 전' 을 붙임
+// 휴장일 출처: JPX 휴장일 표 · TWSE 휴장일 표 · SIFMA 미국 채권시장 휴장 권고 (2026-10-12 확인)
+// ※ 2027년 대만·미국 채권 휴장일은 아직 안 넣음 → 내년 초 표에 추가 필요 (토·일은 자동으로 휴장 처리)
+(function () {
+  var HOL = {
+    JP: { "2026-10-12": "스포츠의 날", "2026-11-03": "문화의 날", "2026-11-23": "근로감사의 날", "2026-12-31": "연말 휴장",
+          "2027-01-01": "설날(신정)", "2027-01-11": "성인의 날", "2027-02-11": "건국기념일", "2027-02-23": "천황 탄생일",
+          "2027-03-22": "춘분 대체휴일", "2027-04-29": "쇼와의 날", "2027-05-03": "헌법기념일", "2027-05-04": "녹색의 날",
+          "2027-05-05": "어린이날", "2027-07-19": "바다의 날", "2027-08-11": "산의 날", "2027-09-20": "경로의 날",
+          "2027-09-23": "추분", "2027-10-11": "스포츠의 날", "2027-11-03": "문화의 날", "2027-11-23": "근로감사의 날", "2027-12-31": "연말 휴장" },
+    TW: { "2026-10-09": "국경일 대체휴일", "2026-10-26": "광복절 대체휴일", "2026-12-25": "행헌기념일" },
+    US: { "2026-10-12": "콜럼버스 데이", "2026-11-11": "재향군인의 날", "2026-11-26": "추수감사절", "2026-12-25": "크리스마스",
+          "2027-01-01": "신정" }
+  };
+  // 시장별: 휴장표 · 한국 시각과의 차이(시간) · 장 시간(현지) · 표시 이름
+  var MK = [
+    { name: "니케이 225", sel: ".ov-item", key: "JP", off: 0, open: "09:00", close: "15:30", tag: "" },
+    { name: "대만 가권", sel: ".ov-item", key: "TW", off: -1, open: "09:00", close: "13:30", tag: "" },
+    { name: "미 10년물", sel: ".mc", key: "US", off: null, open: null, close: null, tag: " (미국 거래일)" }
+  ];
+  var WD = ["일", "월", "화", "수", "목", "금", "토"];
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function ymd(d) { return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()); }
+  function md(d) { return (d.getUTCMonth() + 1) + "/" + d.getUTCDate() + "(" + WD[d.getUTCDay()] + ")"; }
+  function addDay(d, k) { return new Date(d.getTime() + k * 86400000); }
+  function usOffset(kst) {             // 미국 동부: 서머타임(3월 둘째 일요일 ~ 11월 첫째 일요일)이면 −13시간, 아니면 −14시간
+    var y = kst.getUTCFullYear();
+    function nthSun(m, n) { var d = new Date(Date.UTC(y, m, 1)); var add = (7 - d.getUTCDay()) % 7 + (n - 1) * 7; return Date.UTC(y, m, 1 + add); }
+    var t = kst.getTime() - 13 * 3600000;
+    return (t >= nthSun(2, 2) + 2 * 3600000 && t < nthSun(10, 1) + 1 * 3600000) ? -13 : -14;
+  }
+  function closed(key, d) { var w = d.getUTCDay(); return w === 0 || w === 6 || !!HOL[key][ymd(d)]; }
+  function reason(key, a, b) {
+    var out = [];
+    for (var d = a; d <= b; d = addDay(d, 1)) if (HOL[key][ymd(d)] && out.indexOf(HOL[key][ymd(d)]) < 0) out.push(HOL[key][ymd(d)]);
+    return out.length ? out.join(" · ") : "주말";
+  }
+  function block(key, day) {           // day 가 들어 있는 연속 휴장 구간 [시작, 끝]
+    var a = day, b = day;
+    while (closed(key, addDay(a, -1))) a = addDay(a, -1);
+    while (closed(key, addDay(b, 1))) b = addDay(b, 1);
+    return [a, b];
+  }
+  function label(m) {
+    var nowKst = new Date(Date.now() + 9 * 3600000);                 // UTC 시각 칸에 한국 시각을 담아 계산
+    // 미 국채는 뉴욕 시각 전날 18:00 ~ 그날 17:00 가 한 거래일 → 뉴욕 시각 + 6시간의 날짜를 '그 거래일'로 봄
+    var off = m.off === null ? usOffset(nowKst) + 6 : m.off;
+    var loc = new Date(nowKst.getTime() + off * 3600000);             // 그 시장 현지 시각
+    var day = new Date(Date.UTC(loc.getUTCFullYear(), loc.getUTCMonth(), loc.getUTCDate()));
+    var hm = pad(loc.getUTCHours()) + ":" + pad(loc.getUTCMinutes());
+    if (closed(m.key, day)) {
+      var r = block(m.key, day), nxt = addDay(r[1], 1);
+      var rng = r[0].getTime() === r[1].getTime() ? md(r[0]) : md(r[0]) + "~" + md(r[1]);
+      return ["휴장 " + rng + m.tag + " · " + reason(m.key, r[0], r[1]) + " · " + md(nxt) + " 재개", "#c62828"];
+    }
+    var prev = addDay(day, -1), extra = "";
+    var pr = closed(m.key, prev) ? block(m.key, prev) : null;
+    if (pr && reason(m.key, pr[0], pr[1]) !== "주말") {               // 바로 전에 공휴일이 낀 휴장이 있었으면 함께 표시 (평범한 주말은 생략)
+      extra = " · 직전 휴장 " + (pr[0].getTime() === pr[1].getTime() ? md(pr[0]) : md(pr[0]) + "~" + md(pr[1])) + " (" + reason(m.key, pr[0], pr[1]) + ")";
+    }
+    if (m.open && hm < m.open) {
+      var kOpen = m.open.split(":"), kh = (+kOpen[0] - off) % 24;
+      return ["개장 전 (한국 시각 " + pad(kh) + ":" + kOpen[1] + " 개장)" + extra, "#ef6c00"];
+    }
+    if (m.close && hm >= m.close) return ["오늘 장 마감" + extra, "#757575"];
+    return extra ? ["장중" + extra, "#757575"] : null;
+  }
+  function paint() {
+    MK.forEach(function (m) {
+      var cards = document.querySelectorAll(m.sel);
+      for (var i = 0; i < cards.length; i++) {
+        var c = cards[i];
+        var nm = c.querySelector(m.sel === ".mc" ? ".k" : "b");
+        if (!nm || nm.textContent.trim() !== m.name) continue;
+        var old = c.querySelector(".hol-badge");
+        if (old) old.parentNode.removeChild(old);
+        var lb = label(m);
+        if (!lb) continue;
+        var el = document.createElement("div");
+        el.className = "hol-badge";
+        el.style.cssText = "font-size:11px;margin-top:2px;font-weight:600;color:" + lb[1];
+        el.textContent = lb[0];
+        (nm.parentNode || c).appendChild(el);
+      }
+    });
+  }
+  function start() { try { paint(); } catch (e) {} setInterval(function () { try { paint(); } catch (e) {} }, 60000); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+})();
