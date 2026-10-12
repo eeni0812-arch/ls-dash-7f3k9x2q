@@ -639,7 +639,7 @@
   var LWC_URL = "https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js";
   var MINUTES = null, LOADQ = {}, LWC_LOADING = null;
   var CV = { code: "", name: "", view: "my", chart: null, n: 0 };
-  var VIEWS = [["my", "일봉"], ["wk", "주봉"], ["mo", "월봉"], ["min", "5분봉"], ["area", "당일 흐름"], ["inv", "투자자"]];
+  var VIEWS = [["my", "일봉"], ["wk", "주봉"], ["mo", "월봉"], ["min", "분봉"], ["area", "당일 흐름"], ["inv", "투자자"]];
   // 봉 종류별 설정: 자료 키, 이동평균 이름, 기간 버튼, 대신 보여줄 네이버 이미지
   var KIND = {
     my: { key: "d", unit: "일", ranges: [["1개월", 21], ["3개월", 63], ["6개월", 126], ["1년", 250], ["전체", 0]], naver: "day", name: "일봉" },
@@ -845,7 +845,7 @@
   function openChart(code, name) {
     CV.code = code; CV.name = name || nameOf(code);
     var isIdx = String(code).indexOf("IDX") === 0;
-    var views = isIdx ? VIEWS.slice(0, 3).concat([["min", "분봉(1분)"]]) : VIEWS;   // 지수: 일·주·월봉 + 오늘 1분봉(장중 실시간)
+    var views = isIdx ? VIEWS.slice(0, 3).concat([["min", "분봉"]]) : VIEWS;   // 지수: 일·주·월봉 + 오늘 1분봉(장중 실시간)
     var link = isIdx ? "https://finance.naver.com/sise/sise_index.naver?code=" + (code === "IDX301" ? "KOSDAQ" : "KOSPI")
       : "https://finance.naver.com/item/main.naver?code=" + encodeURIComponent(code);
     var ov = document.getElementById("hcOv");
@@ -894,20 +894,22 @@
         }
         drawMy(body, code, ser, v);
       } else {
-        var mm = null, today = liveDayIso(L);
+        var today = liveDayIso(L), src = { isIdx: isIdx, today: today, hist5: null, live1: null, live5: null };
         if (isIdx) {                                                   // 지수: 오늘 1분봉 (30초 값으로 만든 근사 봉)
           var ix = L && L.index && L.index[code.slice(3)];
-          if (ix && ix.m1 && ix.m1.t && ix.m1.t.length) { mm = {}; mm[today] = ix.m1; }
-          if (!mm) { body.innerHTML = "<div class='ht-msg'>오늘 지수 분봉 자료가 아직 없습니다.<br><small>장중(09:00~15:45)에 intraday_live.py 가 돌 때만 1분마다 만들어집니다.</small></div>"; return; }
+          if (ix && ix.m1 && ix.m1.t && ix.m1.t.length) src.live1 = ix.m1;
+          if (!src.live1) { body.innerHTML = "<div class='ht-msg'>오늘 지수 분봉 자료가 아직 없습니다.<br><small>장중(09:00~15:45)에 intraday_live.py 가 돌 때만 1분마다 만들어집니다.</small></div>"; return; }
         } else {
-          var base = C && C.codes ? C.codes[code] : null, live = L && L.stocks && L.stocks[code];
-          if (base || live) { mm = {}; var k2; for (k2 in (base || {})) mm[k2] = base[k2]; if (live && live.m5 && live.m5.t.length && today) mm[today] = live.m5; }
-          if (!mm || !Object.keys(mm).length) {
-            naverImg(body, "area", "5분봉은 최근 20영업일 안에 매매한 날과 보유종목 최근 5영업일만 보관합니다(오늘 것은 장중 실시간). 이 종목은 자료가 없어 네이버 당일 흐름으로 대신 보여드립니다.");
+          var live = L && L.stocks && L.stocks[code];
+          src.hist5 = C && C.codes ? C.codes[code] : null;
+          if (live && live.m1 && live.m1.t && live.m1.t.length) src.live1 = live.m1;
+          if (live && live.m5 && live.m5.t && live.m5.t.length) src.live5 = live.m5;
+          if ((!src.hist5 || !Object.keys(src.hist5).length) && !src.live1 && !src.live5) {
+            naverImg(body, "area", "분봉은 최근 20영업일 안에 매매한 날과 보유종목 최근 5영업일만 보관합니다(오늘 것은 장중 실시간). 이 종목은 자료가 없어 네이버 당일 흐름으로 대신 보여드립니다.");
             return;
           }
         }
-        drawMin(body, code, mm);
+        drawMinSel(body, code, src);
       }
     }); }); }); });
   }
@@ -1181,6 +1183,59 @@
   }
 
   // ── 매매 5분봉 ──
+  // ── 분봉 간격 고르기 (1·3·5·10·15·30·60분) ──
+  //   종목: 지난 날 = 5분봉 자료(저녁 보관)를 묶음 · 오늘 = 장중 1분봉을 묶음 → 1·3분은 오늘만
+  //   지수: 오늘 1분봉(근사)만 · 봉 시각 = 그 봉이 끝나는 시각 (LS 분봉과 같은 방식)
+  var MIN_OPTS = [1, 3, 5, 10, 15, 30, 60];
+  function aggDay(m, n) {
+    var out = { t: [], o: [], h: [], l: [], c: [], v: [] }, cur = null;
+    for (var i = 0; i < m.t.length; i++) {
+      var t = String(m.t[i]), x = (+t.slice(0, 2)) * 60 + (+t.slice(2, 4)) - 540;
+      var end = Math.min(Math.max(Math.ceil(x / n) * n, n > 1 ? n : x), 390), lab = 540 + end;
+      var key = ("0" + Math.floor(lab / 60)).slice(-2) + ("0" + (lab % 60)).slice(-2);
+      if (!cur || cur !== key) {
+        cur = key; out.t.push(key); out.o.push(m.o[i]); out.h.push(m.h[i]); out.l.push(m.l[i]); out.c.push(m.c[i]);
+        out.v.push(m.v ? m.v[i] : 0);
+      } else {
+        var k = out.t.length - 1;
+        out.h[k] = Math.max(out.h[k], m.h[i]); out.l[k] = Math.min(out.l[k], m.l[i]); out.c[k] = m.c[i];
+        out.v[k] += m.v ? m.v[i] : 0;
+      }
+    }
+    return out;
+  }
+  function minBuild(src, n) {
+    var mm = {}, d;
+    if (n % 5 === 0 && src.hist5) for (d in src.hist5) if (d !== src.today) mm[d] = n === 5 ? src.hist5[d] : aggDay(src.hist5[d], n);
+    if (src.today) {
+      if (src.live1) mm[src.today] = n === 1 ? src.live1 : aggDay(src.live1, n);
+      else if (src.live5 && n % 5 === 0) mm[src.today] = n === 5 ? src.live5 : aggDay(src.live5, n);
+      else if (src.hist5 && src.hist5[src.today] && n % 5 === 0) mm[src.today] = aggDay(src.hist5[src.today], n);
+    }
+    return mm;
+  }
+  function drawMinSel(body, code, src) {
+    var def = src.isIdx ? "1" : "5", n = +load(src.isIdx ? "minNIdx" : "minN", def);
+    if (MIN_OPTS.indexOf(n) < 0) n = +def;
+    body.innerHTML = "<div class='hc-range'><label style='font-size:13px'>분봉 간격 <select id='hcMinN' style='padding:4px 6px;border:1px solid #ccc;border-radius:6px;font-size:13px'>" +
+      MIN_OPTS.map(function (k) { return "<option value='" + k + "'" + (k === n ? " selected" : "") + ">" + k + "분</option>"; }).join("") +
+      "</select></label><span class='sp'></span><span style='font-size:11px;color:#888'>" +
+      (src.isIdx ? "지수: 오늘 장중 1분 값(30초 값으로 만든 근사 봉)을 묶음" : "지난 날 = 5분봉 보관분 · 오늘 = 장중 1분봉 · 1·3분은 오늘만") +
+      "</span></div><div id='hcMinBody'></div>";
+    var sub = document.getElementById("hcMinBody");
+    function draw() {
+      dropChart();
+      var mm = minBuild(src, n);
+      CV.minN = n;
+      if (!Object.keys(mm).length) {
+        sub.innerHTML = "<div class='ht-msg'>" + n + "분봉 자료가 없습니다." + (n < 5 && !src.live1 ? "<br><small>1·3분봉은 오늘 장중 1분 자료가 있을 때만 됩니다.</small>" : "") + "</div>";
+        return;
+      }
+      drawMin(sub, code, mm);
+    }
+    document.getElementById("hcMinN").onchange = function () { n = +this.value; save(src.isIdx ? "minNIdx" : "minN", String(n)); draw(); };
+    draw();
+  }
   function drawMin(body, code, mm) {
     var days = Object.keys(mm).sort(), bars = [], dayStarts = [];
     days.forEach(function (d) {
@@ -1243,14 +1298,14 @@
       legend(i);
       var b = bars[i], prev = i > 0 && bars[i - 1].day === b.day ? bars[i - 1].close : null;
       var chg = prev ? (b.close / prev - 1) * 100 : null, open0 = mm[b.day].o[0], chg0 = open0 ? (b.close / open0 - 1) * 100 : null;
-      var end = utc(b.day, b.hhmm) + ((MINUTES && MINUTES.ncnt) || 5) * 60;
+      var nmin = CV.minN || (MINUTES && MINUTES.ncnt) || 5, end = utc(b.day, b.hhmm), beg = end - nmin * 60;   // 봉 시각 = 끝나는 시각
       var tr = marks.filter(function (r) { return r.i === i; }).map(function (r) {
         return r.list.map(function (e) {
           return "<div class='tr' style='color:" + (e.side === "매수" ? "#d32f2f" : "#1565c0") + "'>" + (e.side === "매수" ? "▲ " : "▼ ") + e.side + " " +
             e.time.slice(0, 2) + ":" + e.time.slice(2, 4) + ":" + e.time.slice(4, 6) + " " + won(e.qty) + "주 @" + won(e.price) + "</div>";
         }).join("");
       }).join("");
-      tip.show(p, "<div class='t'>" + b.day + " " + b.hhmm.slice(0, 2) + ":" + b.hhmm.slice(2) + "~" + hm(end) + "</div><table>" +
+      tip.show(p, "<div class='t'>" + b.day + " " + hm(beg) + "~" + hm(end) + " (" + nmin + "분봉)</div><table>" +
         tipRow("시가", won(b.open)) + tipRow("고가", won(b.high), "up") + tipRow("저가", won(b.low), "down") + tipRow("종가", won(b.close), cls(chg)) +
         tipRow("전봉 대비", pct(chg), cls(chg)) + tipRow("당일 시가 대비", pct(chg0), cls(chg0)) + tipRow("20봉선", won(m20[i])) + "</table>" + tr);
     });
@@ -1260,8 +1315,8 @@
     });
     var head = ["매매일", "체결 시각", "구분", "수량", "체결가", "금액"].concat(account() === ALL ? ["계좌"] : []);
     document.getElementById("hcTrades").innerHTML = (execs.length ? table(head, rows) :
-      "<div class='ht-note'>보관 중인 5분봉 기간(" + days[0] + " ~ " + days[days.length - 1] + ")에 선택한 계좌(" + esc(account()) + ")의 이 종목 체결이 없습니다.</div>") +
-      "<div class='ht-note'>▲ 매수 · ▼ 매도 = 실제 체결 시각이 속한 5분봉 · 초록선 20봉 이동평균 · 보관: 최근 20영업일 매매일 + 보유종목 최근 5영업일" +
+      "<div class='ht-note'>보관 중인 분봉 기간(" + days[0] + " ~ " + days[days.length - 1] + ")에 선택한 계좌(" + esc(account()) + ")의 이 종목 체결이 없습니다.</div>") +
+      "<div class='ht-note'>▲ 매수 · ▼ 매도 = 실제 체결 시각이 속한 분봉 · 초록선 20봉 이동평균 · 보관: 최근 20영업일 매매일 + 보유종목 최근 5영업일" +
       " · 기준: " + esc((MINUTES && MINUTES.generated_at) || "") + " (매일 저녁 갱신 — 오늘 장중 흐름은 '당일 흐름' 탭)<br>" +
       "※ 확대·축소: 마우스 휠 / 두 손가락 벌리기·오므리기, 이동: 끌기 · 날짜 사이 장 마감 시간은 건너뛰고 이어 붙여 그립니다.</div>";
   }
