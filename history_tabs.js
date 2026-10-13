@@ -1397,6 +1397,38 @@
   var PAPER = null;
   function ymd(d) { return d ? d.slice(0, 4) + "-" + d.slice(4, 6) + "-" + d.slice(6, 8) : "-"; }
   function md(d) { return d ? d.slice(4, 6) + "/" + d.slice(6, 8) : "-"; }
+  // 2026-10-14 추가: 시장 진단표 (market_diag.py 가 sys_paper.json 의 diag 칸에 씀 · 조회만)
+  function diagBlock(D) {
+    var COL = { "상승장": "#2e7d32", "반등 초기": "#1565c0", "한쪽만 강함": "#8e24aa", "종목장세": "#ef6c00", "하락장": "#c62828", "조정·횡보": "#616161" };
+    var c = COL[D.cls] || "#333";
+    function md2(d) { return d ? d.slice(4, 6) + "/" + d.slice(6) : ""; }
+    var x = "<div style='border:2px solid " + c + ";border-radius:10px;padding:10px 12px;margin:6px 0 12px;text-align:left'>" +
+      "<div style='font-size:12px;color:#888'>시장 진단표 · " + esc(md2(D.day)) + " 종가 기준</div>" +
+      "<div style='font-size:20px;font-weight:800;color:" + c + ";margin:2px 0'>" + esc(D.cls) +
+      " <small style='font-size:12px;color:#888;font-weight:normal'>(" + esc(md2(D.since)) + "부터)</small></div>" +
+      "<div style='font-size:13px;margin-bottom:6px'>대응: " + esc(D.act || "") + "</div>";
+    (D.idx || []).forEach(function (k) {
+      x += "<div style='font-size:12.5px;line-height:1.6'><b>" + esc(k.name) + "</b> " + Number(k.c).toLocaleString(undefined, { maximumFractionDigits: 2 }) +
+        " · 20일선 " + (k.above20 ? "위" : "<span class='down'>아래</span>") +
+        " · 80일선 " + (k.above80 ? "위" : "<span class='down'>아래</span>") + "(" + (k.up80 ? "상승" : "<span class='down'>하락</span>") + " 중)" +
+        " · 1년 고점 대비 <span class='" + cls(k.dd) + "'>" + pct(k.dd, 1) + "</span> · " + esc(k.ftd || "") + "</div>";
+    });
+    var b = D.breadth || {};
+    x += "<div style='font-size:12.5px;line-height:1.6;margin-top:4px'>시장 폭: 60일선 위 " + (b.b60 == null ? "-" : Math.round(b.b60) + "%") +
+      " · 20일선 위 " + (b.b20 == null ? "-" : Math.round(b.b20) + "%") + " · 52주 신고가 " + (b.nh == null ? "-" : b.nh) +
+      " / 신저가 " + (b.nl == null ? "-" : b.nl) + "종목</div>";
+    if ((D.themes || []).length) {
+      x += "<div style='font-size:12.5px;margin-top:6px'><b>강한 테마</b> <small style='color:#888'>(최근 20일 평균 수익률 · 52주 신고가 비율)</small><br>" +
+        D.themes.map(function (t) { return esc(t.name) + " <span class='" + cls(t.r20) + "'>" + pct(t.r20, 1) + "</span> · " + Math.round(t.nh) + "%"; }).join("<br>") + "</div>";
+    }
+    if ((D.flow || []).length) {
+      x += "<div style='font-size:11.5px;color:#666;margin-top:6px'>최근 흐름: " +
+        D.flow.map(function (f) { return esc(f[0]) + "(" + md2(f[1]) + "~" + md2(f[2]) + ")"; }).join(" → ") + "</div>";
+    }
+    x += "<div style='font-size:11px;color:#999;margin-top:4px'>분류 기준은 2026-10-14 초안 · 조회만 (주문 없음)</div></div>";
+    return x;
+  }
+
   function renderPaper() {
     var box = document.getElementById("tab-history");
     if (!PAPER) {
@@ -1419,6 +1451,7 @@
     var realized = (P.sells || []).reduce(function (a, f) { return a + (f.pnl || 0); }, 0);
     var unreal = (P.holdings || []).reduce(function (a, h) { return a + (h.pnl || 0); }, 0);
     var h = "<div class='ht-note' style='text-align:left'>" + esc(P.basis || "") + "</div>";
+    if (P.diag && P.diag.cls) h = diagBlock(P.diag) + h;          // 2026-10-14 추가: 시장 진단표 (market_diag.py)
     h += sumBoxes([
       ["모의 자산", won(P.value) + "원", cls(P.cum)],
       ["누적 수익률", pct(P.cum), cls(P.cum)],
