@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#3446D6">
+<title>업무알림</title>
+<style>
+  html, body { margin:0; height:100%; background:#F5F6F8; }
+  iframe { position:fixed; inset:0; width:100%; height:100%; border:0; }
+  .ld { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; font:600 15px -apple-system,"Malgun Gothic",sans-serif; color:#3D4350; }
+</style>
+</head>
+<body>
+<!-- 업무알림 바깥 페이지: 구글 Apps Script 웹앱을 안에 넣어 보여 줌 (구글 안내 줄이 보이지 않게). 개인 키는 주소에서만 읽고 저장하지 않음 -->
+<div class="ld" id="ld">⏳ 업무알림을 여는 중입니다…</div>
+<iframe id="f" title="업무알림" allow="clipboard-write"></iframe>
+<script>
+  var EXEC = 'https://script.google.com/macros/s/AKfycbyejAFKbGUKyXDQ7bTX6PDI8ThP8yZzPWoBa3MtItj4DxNuZjYYwJ3DvL-yvh4TIc7y/exec';
+  var p = new URLSearchParams(location.search);
+  p.set('w', '1');
+  var f = document.getElementById('f');
+  f.onload = function () { var l = document.getElementById('ld'); if (l) l.remove(); };
+  f.src = EXEC + '?' + p.toString();
+</script>
+</body>
+</html>
