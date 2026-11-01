@@ -1557,7 +1557,7 @@
         if ((V.events || []).length) h += "<div class='ht-note' style='text-align:left'><b>최근 매매</b><br>" + V.events.map(esc).join("<br>") + "</div>";
         var vhr = (V.holdings || []).map(function (x) {
           return "<tr>" + nameCell(x.code, x.name) + td(md(x.in)) + td(won(x.cost)) + td(won(x.price)) + td(pct(x.ret, 1), cls(x.ret)) +
-            td(won(x.pnl), cls(x.pnl)) + td(won(x.stop) + (x.be ? " (본전)" : " (−8%)"), "down") + td(x.hit24 ? "절반 매도함" : won(x.t24)) +
+            td(won(x.pnl), cls(x.pnl)) + td(x.stop == null ? "-" : won(x.stop) + (x.be ? " (본전)" : " (−8%)"), "down") + td(x.hit24 ? "절반 매도함" : won(x.t24)) +
             td(x.wk ? "주봉 매도 모드" : (x.ma20 ? won(x.ma20) : "-")) + "</tr>";
         });
         h += table(["종목명", "매수일", "1주 원가", "현재가", "수익률", "평가손익", "손절가", "+24% 매도가", "20일선"], vhr);
